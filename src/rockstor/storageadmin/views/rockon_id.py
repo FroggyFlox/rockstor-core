@@ -21,22 +21,15 @@ import time
 
 from django.db import transaction
 from rest_framework.response import Response
-
-import rest_framework_custom as rfc
-from rockon_helpers import docker_status, start, stop, install, uninstall, update
-from storageadmin.models import (
-    RockOn,
-    DContainer,
-    DVolume,
-    DContainerDevice,
-    Share,
-    DPort,
-    DCustomConfig,
-    DContainerEnv,
-    DContainerLabel,
-)
+from django.db import transaction
+from storageadmin.models import (RockOn, DContainer, DVolume, DContainerDevice,
+                                 Share, DPort, DCustomConfig, DContainerEnv,
+                                 DContainerLabel, DContainerLink)
 from storageadmin.serializers import RockOnSerializer
+import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
+from rockon_helpers import (docker_status, start, stop, install, uninstall,
+                            update, dnet_remove)
 from system.services import superctl
 
 logger = logging.getLogger(__name__)
@@ -204,7 +197,10 @@ class RockOnIdView(rfc.GenericView):
                 for co in DContainer.objects.filter(rockon=rockon):
                     DVolume.objects.filter(container=co, uservol=True).delete()
                     DContainerLabel.objects.filter(container=co).delete()
-            elif command == "update":
+                    if DContainerLink.objects.filter(destination=co):
+                        logger.debug('One of the rockon containers [{} ({})] has a link'.format(co, co.name))
+                        dnet_remove(co)
+            elif (command == 'update'):
                 self._pending_check(request)
                 if rockon.state != "installed":
                     e_msg = (
