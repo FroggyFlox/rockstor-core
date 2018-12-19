@@ -266,9 +266,9 @@ def probe_running_containers(container=None, network=None):
 
 def dnet_remove(container):
     for lo in DContainerLink.objects.filter(destination=container):
-        nets = run_command(list(DNET) + ['list', ])
+        nets = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])
         logger.debug('the network name is: {}'.format(lo.name))
-        if (str(lo.name) in str(nets)):
+        if (lo.name in nets[0]):
             logger.debug('the network {} WAS detected, so delete it now.'.format(lo.name))
             run_command(list(DNET) + ['rm', lo.name, ])
             logger.debug('the network {} is now deleted.'.format(lo.name))
@@ -276,16 +276,43 @@ def dnet_remove(container):
             logger.debug('the network {} was NOT detected, so nothing to do.'.format(lo.name))
 
 
-def labels_ops(container):
-    labels_list = []
-    for l in DContainerLabel.objects.filter(container=container):
-        if len(l.val.strip()) > 0:
-            labels_list.extend(["--label", "%s" % (l.val)])
-    return labels_list
-
-
 def generic_install(rockon):
-    for c in DContainer.objects.filter(rockon=rockon).order_by("launch_order"):
+def dnet_create(network):
+    nets = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])  # Get list of networks
+    if (network not in nets[0]):
+        logger.debug('the network {} was NOT detected, so create it now.'.format(network))
+        run_command(list(DNET) + ['create', network, ])
+    else:
+        logger.debug('the network {} was detected, so do NOT create it.'.format(network))
+
+
+def dnet_connect(container, network):
+    if (container in probe_running_containers(container=container)):
+        logger.debug(
+            'The container ({}) is not absent so connect it to the network {}'.format(
+                container, network))
+        if (containernot in probe_running_containers(network=network)):
+            logger.debug(
+                'The container ({}) is not already connected to the network {}'.format(
+                    container, network))
+            run_command(list(DNET) + ['connect', network, container, ])
+
+
+def dnet_create_connect(rockon):
+    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+        logger.debug('The container name is {}'.format(c.name))
+        if DContainerLink.objects.filter(destination=c):
+            for lo in DContainerLink.objects.filter(destination=c):
+                logger.debug('The lo.id is {}, lo.name is {}, lo.source_id is {}, and lo.destination_id is {}'.format(lo.id, lo.name, lo.source_id, lo.destination_id))
+                dnet_create(lo.name)
+                # Connect containers
+                logger.debug('Start CONNECTING containers')
+                dnet_connect(lo.destination.name, lo.name)
+                dnet_connect(lo.source.name, lo.name)
+    # @todo: add detection of finished installed before creating networks?
+
+
+    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         rm_container(c.name)
         # pull image explicitly so we get updates on re-installs.
         image_name_plus_tag = c.dimage.name + ":" + c.dimage.tag
@@ -311,36 +338,8 @@ def generic_install(rockon):
         cmd.append(image_name_plus_tag)
         cmd.extend(cargs(c))
         run_command(cmd, log=True)
-    ## Get to networks @todo: wrap in function
-    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
-        logger.debug('The container name is {}'.format(c.name))
-        if DContainerLink.objects.filter(destination=c):
-            for lo in DContainerLink.objects.filter(destination=c):
-                logger.debug('The lo.id is {}, lo.name is {}, lo.source_id is {}, and lo.destination_id is {}'.format(lo.id, lo.name, lo.source_id, lo.destination_id))
-                nets = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])  # Get list of networks
-                logger.debug('the network name is: {}'.format(lo.name))
-                if (lo.name not in nets[0]):
-                    logger.debug('the network {} was NOT detected, so create it now.'.format(lo.name))
-                    run_command(list(DNET) + ['create', lo.name, ])
-                else:
-                    logger.debug('the network {} was detected, so do NOT create it.'.format(lo.name))
-                # Connect containers
-                logger.debug('Start CONNECTING containers')
-                if (lo.destination.name in probe_running_containers(container=lo.destination.name)):
-                    logger.debug('The destination container ({}) is not absent so connect it to the network {}'.format(lo.destination.name, lo.name))
-                    if (lo.destination.name not in probe_running_containers(network=lo.name)):
-                        logger.debug(
-                            'The destination container ({}) is not already connected to the network {}'.format(
-                                lo.destination.name, lo.name))
-                        run_command(list(DNET) + ['connect', lo.name, lo.destination.name, ])
-                if (lo.source.name in probe_running_containers(container=lo.source.name)):
-                    logger.debug('The source container ({}) is not absent so connect it to the network {}'.format(lo.source.name, lo.name))
-                    if (lo.name not in probe_running_containers(network=lo.name)):
-                        logger.debug(
-                            'The source container ({}) is not already connected to the network {}'.format(
-                                lo.source.name, lo.name))
-                        run_command(list(DNET) + ['connect', lo.name, lo.source.name, ])
-    # @todo: add detection of finished installed before creating networks?
+    ## Get to networks
+    dnet_create_connect(rockon)
 
 
 def openvpn_install(rockon):
