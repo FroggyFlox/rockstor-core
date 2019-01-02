@@ -18,7 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import json
 from django.db import models
-
+import logging
+logger = logging.getLogger(__name__)
 
 # This is the key abstraction for network configuration that is user
 # configurable in Rockstor.  user can add, delete or modify connections which
@@ -80,12 +81,14 @@ class NetworkConnection(models.Model):
 
     @property
     def ctype(self):
-        if self.ethernetconnection_set.count() > 0:
-            return "ethernet"
-        if self.teamconnection_set.count() > 0:
-            return "team"
-        if self.bondconnection_set.count() > 0:
-            return "bond"
+        if (self.ethernetconnection_set.count() > 0):
+            return 'ethernet'
+        if (self.teamconnection_set.count() > 0):
+            return 'team'
+        if (self.bondconnection_set.count() > 0):
+            return 'bond'
+        if (self.bridgeconnection_set.count() > 0):
+            return 'bridge'
         return None
 
     @property
@@ -111,6 +114,16 @@ class NetworkConnection(models.Model):
             pass
         finally:
             return profile
+
+    @property
+    def docker_name(self):
+        logger.debug('The property method docker_name has been triggered')
+        dname = None
+        if self.bridgeconnection_set.count() > 0:
+            brco = self.bridgeconnection_set.first()
+            dname = brco.docker_name
+            logger.debug('dname is {}.'.format(dname))
+        return dname
 
     class Meta:
         app_label = "storageadmin"
@@ -177,3 +190,11 @@ class BondConnection(models.Model):
 
     class Meta:
         app_label = "storageadmin"
+
+
+class BridgeConnection(models.Model):
+    connection = models.ForeignKey(NetworkConnection, null=True)
+    docker_name = models.CharField(max_length=64, null=True)
+
+    class Meta:
+        app_label = 'storageadmin'
