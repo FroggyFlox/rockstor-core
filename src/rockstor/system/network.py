@@ -182,6 +182,7 @@ def get_con_config(con_list):
                 elif (tmap['ctype'] == 'bridge'):
                     cid, _, _ = run_command([NMCLI, '-g', 'connection.id', 'c', 'show', uuid, ])
                     if (cid[0].startswith('br-')):
+                        logger.debug('dnets(cid[0][3:])[0] is = {}'.format(dnets(cid[0][3:])[0]))
                         tmap[tmap['ctype']] = {
                             'docker_name': dnets(cid[0][3:])[0],
                     }
