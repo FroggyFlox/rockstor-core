@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
 import time
+import json
 
 from django.conf import settings
 from django_ztask.decorators import task
@@ -260,6 +261,18 @@ def dnets(id=None, type=None):
     return o[:-1]
 
 
+def dnet_inspect(dname):
+    """
+    This function takes the name of a docker network as argument
+    and returns a dict of its configuration
+    :param dname: docker network name
+    :return: dict
+    """
+    cmd = list(DNET) + ['inspect', dname, '--format', '{{json .}}', ]
+    o,_,_ = run_command(cmd)
+    return json.loads(o[0])
+
+
 def probe_running_containers(container=None, network=None, all=False):
     cmd = [DOCKER, 'ps', '--format', '{{.Names}}', ]
     running_filters = ['--filter', 'status=created',
@@ -316,7 +329,8 @@ def dnet_create(network, aux_address=None, dgateway=None, host_binding=None,
         if (dgateway is not None and len(dgateway.strip()) > 0):
             cmd.extend(['--gateway={}'.format(dgateway), ])
         if (aux_address is not None and len(aux_address.strip()) > 0):
-            cmd.extend(['--aux-address="{}"'.format(aux_address.strip()), ])
+            for i in aux_address.split(','):
+                cmd.extend(['--aux-address="{}"'.format(i.strip()), ])
         if (host_binding is not None and len(host_binding.strip()) > 0):
             cmd.extend(['--opt', 'com.docker.network.bridge.host_binding_ipv4={}'.format(host_binding), ])
         if (icc is True):
