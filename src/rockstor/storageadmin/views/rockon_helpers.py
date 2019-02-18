@@ -179,7 +179,11 @@ def container_ops(container):
 def port_ops(container):
     ops_list = []
     for po in DPort.objects.filter(container=container):
+        logger.debug('Test if port {} ({}) should be published'.format(po.id, po.description))
         # @todo: Skip po if export = false
+        if (po.publish is not True):
+            logger.debug('The port {} ({}) should not be published ({}), so skip it!'. format(po.id, po.description, po.publish))
+            continue
         pstr = '{}:{}'.format(po.hostp, po.containerp)
         if (po.protocol is not None):
             pstr = '{}/{}'.format(pstr, po.protocol)
