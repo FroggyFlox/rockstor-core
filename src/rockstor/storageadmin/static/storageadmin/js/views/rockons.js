@@ -1427,7 +1427,8 @@ RockonEditPorts = RockstorWizardPage.extend({
         this.$('.form-control').each(function(index, element) {
             $(this).select2({
                 dropdownParent: $('#install-rockon-overlay'),
-                width: '80%'
+                width: '80%',
+                tags: true
             });
         });
 
