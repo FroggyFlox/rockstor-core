@@ -25,8 +25,6 @@ from django.conf import settings
 from django_ztask.decorators import task
 
 from cli.api_wrapper import APIWrapper
-from fs.btrfs import mount_share
-from rockon_utils import container_status
 from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  DCustomConfig, DContainerLink,
                                  ContainerOption, DContainerEnv,

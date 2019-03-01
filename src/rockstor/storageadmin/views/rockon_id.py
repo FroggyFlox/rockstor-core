@@ -32,6 +32,7 @@ from storageadmin.util import handle_exception
 from rockon_helpers import (docker_status, start, stop, install, uninstall,
                             update, dnet_remove, dnet_create)
 from system.services import superctl
+from network import NetworkMixin
 
 logger = logging.getLogger(__name__)
 
@@ -295,7 +296,10 @@ class RockOnIdView(rfc.GenericView):
                             co = DContainer.objects.get(rockon=rockon, name=c)
                             if (not BridgeConnection.objects.filter(docker_name=net).exists()):
                                 logger.debug('the network {} does not exist.'.format(net))
-                                dnet_create(network=net, update=True)
+                                dnet_create(network=net)
+                                # @todo: integrate the forced update of network connections
+                                #   into dnet_create() with an optional flag `update=True`
+                                NetworkMixin._refresh_connections()
                             brco = BridgeConnection.objects.get(docker_name=net)
                             logger.debug('co is {}, with id {} and name {}'.format(co, co.id, co.name))
                             logger.debug('brco is {}, with docker_name {}'.format(brco, brco.docker_name))
