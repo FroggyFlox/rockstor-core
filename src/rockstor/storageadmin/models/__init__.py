@@ -43,30 +43,13 @@ from adv_nfs_exports import AdvancedNFSExport  # noqa E501
 from oauth_app import OauthApp  # noqa E501
 from pool_balance import PoolBalance  # noqa E501
 from tls_certificate import TLSCertificate  # noqa E501
-from rockon import (
-    RockOn,
-    DImage,
-    DContainer,
-    DPort,
-    DVolume,  # noqa E501
-    ContainerOption,
-    DCustomConfig,
-    DContainerLink,  # noqa E501
-    DContainerEnv,
-    DContainerDevice,
-    DContainerArgs,
-    DContainerLabel,
-)  # noqa E501
-from smart import (
-    SMARTAttribute,
-    SMARTCapability,
-    SMARTErrorLog,  # noqa E501
-    SMARTErrorLogSummary,
-    SMARTTestLog,
-    SMARTTestLogDetail,  # noqa E501
-    SMARTIdentity,
-    SMARTInfo,
-)  # noqa E501
+from rockon import (RockOn, DImage, DContainer, DPort, DVolume,  # noqa E501
+                    ContainerOption, DCustomConfig, DContainerLink,  # noqa E501
+                    DContainerEnv, DContainerDevice, DContainerArgs,
+                    DContainerLabel, DContainerNetwork)  # noqa E501
+from smart import (SMARTAttribute, SMARTCapability, SMARTErrorLog,  # noqa E501
+                   SMARTErrorLogSummary, SMARTTestLog, SMARTTestLogDetail,  # noqa E501
+                   SMARTIdentity, SMARTInfo)  # noqa E501
 from config_backup import ConfigBackup  # noqa E501
 from email import EmailClient  # noqa E501
 from update_subscription import UpdateSubscription  # noqa E501

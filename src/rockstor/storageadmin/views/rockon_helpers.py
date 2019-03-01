@@ -27,21 +27,16 @@ from django_ztask.decorators import task
 from cli.api_wrapper import APIWrapper
 from fs.btrfs import mount_share
 from rockon_utils import container_status
-from storageadmin.models import (
-    RockOn,
-    DContainer,
-    DVolume,
-    DPort,
-    DCustomConfig,
-    DContainerLink,
-    ContainerOption,
-    DContainerEnv,
-    DContainerDevice,
-    DContainerArgs,
-    DContainerLabel,
-)
+from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
+                                 DCustomConfig, DContainerLink,
+                                 ContainerOption, DContainerEnv,
+                                 DContainerDevice, DContainerArgs,
+                                 DContainerLabel, DContainerNetwork)
 from system.osi import run_command
 from system.services import service_status
+from fs.btrfs import mount_share
+from rockon_utils import container_status
+from network import NetworkMixin
 
 DOCKER = '/usr/bin/docker'
 ROCKON_URL = 'https://localhost/api/rockons'
@@ -249,6 +244,12 @@ def labels_ops(container):
 
 
 def dnets(id=None, type=None):
+    """
+    List the docker names of all docker networks.
+    :param id: string, used to test for network presence.
+    :param type: string, either 'custom' or 'builtin'
+    :return:
+    """
     cmd = list(DNET) + ['ls',
                         # '--filter', 'type=custom',
                         '--format', '{{.Name}}']
@@ -268,7 +269,7 @@ def dnets(id=None, type=None):
 def dnet_inspect(dname):
     """
     This function takes the name of a docker network as argument
-    and returns a dict of its configuration
+    and returns a dict of its configuration.
     :param dname: docker network name
     :return: dict
     """
@@ -278,6 +279,13 @@ def dnet_inspect(dname):
 
 
 def probe_running_containers(container=None, network=None, all=False):
+    """
+    List docker containers.
+    :param container:
+    :param network:
+    :param all:
+    :return:
+    """
     cmd = [DOCKER, 'ps', '--format', '{{.Names}}', ]
     running_filters = ['--filter', 'status=created',
                        '--filter', 'status=restarting',
@@ -323,7 +331,7 @@ def dnet_remove(container=None, network=None):
 
 def dnet_create(network, aux_address=None, dgateway=None, host_binding=None,
                 icc=None, internal=None, ip_masquerade=None, ip_range=None,
-                mtu=1500, subnet=None):
+                mtu=1500, subnet=None, update=False):
     o, e, rc = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])
     if (network not in o):
         logger.debug('the network {} was NOT detected, so create it now.'.format(network))
@@ -350,6 +358,9 @@ def dnet_create(network, aux_address=None, dgateway=None, host_binding=None,
         cmd.extend([network, ])
         run_command(cmd, log=True)
         # run_command(list(DNET) + ['create', network, ])
+        if update:
+            logger.debug('A forced update of network connections was requested.')
+            NetworkMixin._refresh_connections()
     else:
         logger.debug('the network {} was detected, so do NOT create it.'.format(network))
 
@@ -382,6 +393,10 @@ def dnet_create_connect(rockon):
                 logger.debug('Start CONNECTING containers')
                 dnet_connect(lo.destination.name, lo.name)
                 dnet_connect(lo.source.name, lo.name)
+        if DContainerNetwork.objects.filter(container=c):
+            for cno in DContainerNetwork.objects.filter(container=c):
+                dnet_create(cno.connection.docker_name)
+                dnet_connect(container=cno.container.name, network=cno.connection.docker_name)
     # @todo: add detection of (or wait for) finished installed before creating networks?
 
 
