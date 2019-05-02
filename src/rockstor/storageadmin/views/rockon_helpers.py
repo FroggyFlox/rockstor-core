@@ -73,8 +73,10 @@ def rm_container(name):
 
 @task()
 def start(rid):
+    logger.debug('the rockon {} was triggered for start'.format(rid))
     rockon = RockOn.objects.get(id=rid)
-    globals().get("%s_start" % rockon.name.lower(), generic_start)(rockon)
+    logger.debug('the rockon is {}'.format(rockon.name))
+    globals().get('%s_start' % rockon.name.lower(), generic_start)(rockon)
 
 
 def generic_start(rockon):
@@ -116,9 +118,29 @@ def generic_stop(rockon):
 
 
 @task()
-def update(rid):
-    uninstall(rid, new_state="pending_update")
-    install(rid)
+def update(rid, live=False):
+    logger.debug('LIVE-update is set as {}'.format(live))
+    if live:
+        logger.debug('A live-update will be attempted.')
+        new_state = 'installed'
+        try:
+            rockon = RockOn.objects.get(id=rid)
+            logger.debug('rid is {} and rockon is {}'.format(rid, rockon))
+            start(rid)
+            dnet_create_connect(rockon)
+        except Exception as e:
+            logger.debug('Exception while live-updating the rock-on ({})'.format(rockon))
+            logger.exception(e)
+            new_state = 'install_failed'
+        finally:
+            url = ('rockons/{}/state_update'.format(rid))
+            logger.debug('Update rockon ({}) STATE to: {} ({})'.format(rockon.name, new_state, url))
+            return aw.api_call(url, data={'new_state': new_state, },
+                               calltype='post', save_error=False)
+    else:
+        logger.debug('NORMAL-update of the rockonas {}'.format(live))
+        uninstall(rid, new_state='pending_update')
+        install(rid)
 
 
 @task()
@@ -376,7 +398,7 @@ def dnet_connect(container, network, all=False):
 
 
 def dnet_disconnect(container, network):
-    run_command(list(DNET) + ['disconnect', network, container, ])
+    run_command(list(DNET) + ['disconnect', network, container, ], log=True)
 
 
 def dnet_create_connect(rockon):
@@ -392,6 +414,7 @@ def dnet_create_connect(rockon):
                 dnet_connect(lo.destination.name, lo.name)
                 dnet_connect(lo.source.name, lo.name)
         if DContainerNetwork.objects.filter(container=c):
+            logger.debug('Create and Connect container {}'.format(c.name))
             for cno in DContainerNetwork.objects.filter(container=c):
                 dnet_create(cno.connection.docker_name)
                 dnet_connect(container=cno.container.name, network=cno.connection.docker_name)
