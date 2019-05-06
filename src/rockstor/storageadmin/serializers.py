@@ -172,6 +172,7 @@ class DashboardConfigSerializer(serializers.ModelSerializer):
 
 class NetworkDeviceSerializer(serializers.ModelSerializer):
     cname = serializers.CharField()
+    dev_name = serializers.CharField()
 
     class Meta:
         model = NetworkDevice
@@ -186,7 +187,6 @@ class NetworkConnectionSerializer(serializers.ModelSerializer):
     # docker_net = serializers.BooleanField()
     user_dnet = serializers.BooleanField()
     docker_options = serializers.DictField()
-
 
     class Meta:
         model = NetworkConnection
