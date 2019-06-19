@@ -46,13 +46,6 @@ logger = logging.getLogger(__name__)
 aw = APIWrapper()
 
 
-def docker_status():
-    o, e, rc = service_status("docker")
-    if rc != 0:
-        return False
-    return True
-
-
 def rockon_status(name):
     ro = RockOn.objects.get(name=name)
     if globals().get("%s_status" % ro.name.lower()) is not None:
@@ -301,11 +294,12 @@ def dnet_inspect(dname):
 def probe_running_containers(container=None, network=None, all=False):
     """
     List docker containers.
-    :param container:
+    :param container: container name
     :param network:
     :param all:
     :return:
     """
+    # TODO: Consider moving to system.docker
     cmd = [DOCKER, 'ps', '--format', '{{.Names}}', ]
     running_filters = ['--filter', 'status=created',
                        '--filter', 'status=restarting',
