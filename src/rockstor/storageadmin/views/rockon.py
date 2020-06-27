@@ -23,13 +23,9 @@ import pickle
 import re
 
 import requests
-from django.conf import settings
 from django.db import transaction
-from django_ztask.models import Task
 from rest_framework.response import Response
 
-import rest_framework_custom as rfc
-from rockon_helpers import docker_status, rockon_status
 from smart_manager.models import Service
 from storageadmin.models import (
     RockOn,

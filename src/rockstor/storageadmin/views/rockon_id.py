@@ -33,11 +33,12 @@ from rockon_helpers import (start, stop, install, uninstall,
                             update, dnet_remove, dnet_create, dnet_disconnect)
 from system.services import superctl
 from system.docker import docker_status
+from storageadmin.views.network import NetworkMixin
 
 logger = logging.getLogger(__name__)
 
 
-class RockOnIdView(rfc.GenericView):
+class RockOnIdView(rfc.GenericView, NetworkMixin):
     serializer_class = RockOnSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -310,6 +311,7 @@ class RockOnIdView(rfc.GenericView):
                                     # @todo: integrate the forced update of network connections
                                     #   into dnet_create() with an optional flag `update=True`
                                     # NetworkMixin._refresh_connections()
+                                    self._refresh_connections()
                                 brco = BridgeConnection.objects.get(docker_name=net)
                                 co = DContainer.objects.get(rockon=rockon, name=c)
                                 logger.debug('The container ({}) is {}'.format(co.id, co.name))
