@@ -186,7 +186,8 @@ def get_con_config(con_list):
                         'config': None
                     }
                 elif (tmap['ctype'] == 'bridge'):
-                    cid, _, _ = run_command([NMCLI, '-g', 'connection.id', 'c', 'show', uuid, ])
+                    # cid, _, _ = run_command([NMCLI, '-g', 'connection.id', 'c', 'show', uuid, ])
+                    cid = tmap['name']
                     tmap[tmap['ctype']] = {
                         'docker_name': None,
                         'aux_address': None,
@@ -200,11 +201,12 @@ def get_con_config(con_list):
                     }
                     # Get docker_name
                     if (docker_status()):
-                        if (cid[0].startswith('br-')):  # custom-type docker network
-                            logger.debug('dnets(cid[0][3:])[0] is = {}'.format(dnets(cid[0][3:])[0]))
-                            docker_name = dname = dnets(cid[0][3:])[0]
+                        # if (cid[0].startswith('br-')):  # custom-type docker network
+                        if (cid.startswith('br-')):  # custom-type docker network
+                            logger.debug('dnets(cid[3:])[0] is = {}'.format(dnets(cid[3:])[0]))
+                            docker_name = dname = dnets(cid[3:])[0]
                         else:  # default docker0 bridge network
-                            docker_name = cid[0]
+                            docker_name = cid
                             logger.debug('dnets docker_name is = {}'.format(docker_name))
                             dname = 'bridge'
                         # Fill custom information, if any.
