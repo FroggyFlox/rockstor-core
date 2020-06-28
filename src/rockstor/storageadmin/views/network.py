@@ -440,7 +440,8 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                         for c in clist:
                             logger.debug('Connect {} to the Docker network {}'.format(c, dname))
                             dnet_connect(c, dname, all=True)
-                except:
+                except Exception as e:
+                    logger.debug("An error occurred while creating the docker network: {}".format(e))
                     # The creation of the new network has failed, so re-create the old one
                     dconf = BridgeConnection.objects.filter(docker_name=docker_name).values()[0]
                     aux_address = dconf['aux_address']
@@ -460,6 +461,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                         for c in clist:
                             logger.debug('Connect {} to the Docker network {}'.format(c, dname))
                             dnet_connect(c, docker_name, all=True)
+                    raise e
 
                 # if (dname != docker_name): # No need to test for successful creation in this case
                 #     # Create new docker network
