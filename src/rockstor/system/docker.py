@@ -16,10 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from osi import run_command
 import collections
 import json
-from .services import service_status
+import logging
+
+from system.osi import run_command
+from system.services import service_status
 
 Image = collections.namedtuple("Image", "repository tag image_id created " "virt_size")
 Container = collections.namedtuple(
@@ -27,8 +29,9 @@ Container = collections.namedtuple(
 )
 
 DOCKER = "/usr/bin/docker"
-DNET = [DOCKER, "network"]
+DNET = [DOCKER, "network", ]
 
+logger = logging.getLogger(__name__)
 
 def image_list():
     """
@@ -70,6 +73,13 @@ def container_list():
     return containers
 
 
+def docker_status():
+    o, e, rc = service_status("docker")
+    if rc != 0:
+        return False
+    return True
+
+
 def dnets(id=None, type=None):
     """
     List the docker names of all docker networks.
@@ -96,13 +106,6 @@ def dnets(id=None, type=None):
     return o[:-1]
 
 
-def docker_status():
-    o, e, rc = service_status("docker")
-    if rc != 0:
-        return False
-    return True
-
-
 def dnet_inspect(dname):
     """
     This function takes the name of a docker network as argument
@@ -113,3 +116,96 @@ def dnet_inspect(dname):
     cmd = list(DNET) + ["inspect", dname, "--format", "{{json .}}"]
     o, _, _ = run_command(cmd)
     return json.loads(o[0])
+
+
+def probe_running_containers(container=None, network=None, all=False):
+    """
+    List docker containers.
+    :param container: container name
+    :param network:
+    :param all:
+    :return:
+    """
+    cmd = [DOCKER, 'ps', '--format', '{{.Names}}', ]
+    running_filters = ['--filter', 'status=created',
+                       '--filter', 'status=restarting',
+                       '--filter', 'status=running',
+                       '--filter', 'status=paused', ]
+    if all:
+        cmd.extend((['-a', ]))
+    if network:
+        cmd.extend((['--filter', 'network={}'.format(network), ]))
+    if container:
+        if all:
+            cmd.extend((['-a', ]))
+        else:
+            cmd.extend((running_filters + ['--filter', 'name={}'.format(container), ]))
+    else:
+        cmd.extend((running_filters))
+    o, e, rc = run_command(cmd)
+    return o
+
+
+def dnet_create(network, aux_address=None, dgateway=None, host_binding=None,
+                icc=None, internal=None, ip_masquerade=None, ip_range=None,
+                mtu=1500, subnet=None):
+    """
+    This method checks for an already existing docker network with the same name.
+    If none is found, it will be created using the different parameters given.
+    If no parameter is specified, the network will be created using docker's defaults.
+    :param network:
+    :param aux_address:
+    :param dgateway:
+    :param host_binding:
+    :param icc:
+    :param internal:
+    :param ip_masquerade:
+    :param ip_range:
+    :param mtu:
+    :param subnet:
+    :return:
+    """
+    o, e, rc = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])
+    if (network not in o):
+        logger.debug('the network {} was NOT detected, so create it now.'.format(network))
+        cmd = list(DNET) + ['create', ]
+        if (subnet is not None and len(subnet.strip()) > 0):
+            cmd.extend(['--subnet={}'.format(subnet), ])
+        if (dgateway is not None and len(dgateway.strip()) > 0):
+            cmd.extend(['--gateway={}'.format(dgateway), ])
+        if (aux_address is not None and len(aux_address.strip()) > 0):
+            for i in aux_address.split(','):
+                cmd.extend(['--aux-address="{}"'.format(i.strip()), ])
+        if (host_binding is not None and len(host_binding.strip()) > 0):
+            cmd.extend(['--opt', 'com.docker.network.bridge.host_binding_ipv4={}'.format(host_binding), ])
+        if (icc is True):
+            cmd.extend(['--opt', 'com.docker.network.bridge.enable_icc=true', ])
+        if (internal is True):
+            cmd.extend(['--internal', ])
+        if (ip_masquerade is True):
+            cmd.extend(['--opt', 'com.docker.network.bridge.enable_ip_masquerade=true', ])
+        if (ip_range is not None and len(ip_range.strip()) > 0):
+            cmd.extend(['--ip-range={}'.format(ip_range), ])
+        if (mtu != 1500):
+            cmd.extend(['--opt', 'com.docker.network.driver.mtu={}'.format(mtu), ])
+        cmd.extend([network, ])
+        run_command(cmd, log=True)
+        # run_command(list(DNET) + ['create', network, ])
+    else:
+        logger.debug('the network {} was detected, so do NOT create it.'.format(network))
+
+
+def dnet_connect(container, network, all=False):
+    if (container in probe_running_containers(container=container, all=all)):
+        logger.debug(
+            'The container ({}) is not absent so connect it to the network {}'.format(
+                container, network))
+        if (container not in probe_running_containers(network=network, all=all)):
+            logger.debug(
+                'The container ({}) is not already connected to the network {}'.format(
+                    container, network))
+            run_command(list(DNET) + ['connect', network, container, ], log=True)
+
+
+def dnet_disconnect(container, network):
+    run_command(list(DNET) + ['disconnect', network, container, ], log=True)

@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
 import time
-import json
 
 from django.conf import settings
 from django_ztask.decorators import task
@@ -30,6 +29,7 @@ from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
                                  ContainerOption, DContainerEnv,
                                  DContainerDevice, DContainerArgs,
                                  DContainerLabel, DContainerNetwork)
+from system.docker import dnet_create, dnet_connect
 from system.osi import run_command
 from fs.btrfs import mount_share
 from rockon_utils import container_status
@@ -254,35 +254,6 @@ def labels_ops(container):
     return labels_list
 
 
-def probe_running_containers(container=None, network=None, all=False):
-    """
-    List docker containers.
-    :param container: container name
-    :param network:
-    :param all:
-    :return:
-    """
-    # TODO: Consider moving to system.docker
-    cmd = [DOCKER, 'ps', '--format', '{{.Names}}', ]
-    running_filters = ['--filter', 'status=created',
-                       '--filter', 'status=restarting',
-                       '--filter', 'status=running',
-                       '--filter', 'status=paused', ]
-    if all:
-        cmd.extend((['-a', ]))
-    if network:
-        cmd.extend((['--filter', 'network={}'.format(network), ]))
-    elif container:
-        if all:
-            cmd.extend((['-a', ]))
-        else:
-            cmd.extend((running_filters + ['--filter', 'name={}'.format(container), ]))
-    else:
-        cmd.extend((running_filters))
-    o, e, rc = run_command(cmd)
-    return o
-
-
 def dnet_remove(container=None, network=None):
     """
     This method uses the docker toolset to remove a user-defined network.
@@ -304,75 +275,6 @@ def dnet_remove(container=None, network=None):
                 logger.debug('the network {} was NOT detected, so nothing to do.'.format(lo.name))
     elif network:
         run_command(list(DNET) + ['rm', network, ])
-
-
-def dnet_create(network, aux_address=None, dgateway=None, host_binding=None,
-                icc=None, internal=None, ip_masquerade=None, ip_range=None,
-                mtu=1500, subnet=None, update=False):
-    """
-    This method checks for an already existing docker network with the same name.
-    If none is found, it will be created using the different parameters given.
-    If no parameter is specified, the network will be created using docker's defaults.
-    :param network:
-    :param aux_address:
-    :param dgateway:
-    :param host_binding:
-    :param icc:
-    :param internal:
-    :param ip_masquerade:
-    :param ip_range:
-    :param mtu:
-    :param subnet:
-    :param update:
-    :return:
-    """
-    o, e, rc = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])
-    if (network not in o):
-        logger.debug('the network {} was NOT detected, so create it now.'.format(network))
-        cmd = list(DNET) + ['create', ]
-        if (subnet is not None and len(subnet.strip()) > 0):
-            cmd.extend(['--subnet={}'.format(subnet), ])
-        if (dgateway is not None and len(dgateway.strip()) > 0):
-            cmd.extend(['--gateway={}'.format(dgateway), ])
-        if (aux_address is not None and len(aux_address.strip()) > 0):
-            for i in aux_address.split(','):
-                cmd.extend(['--aux-address="{}"'.format(i.strip()), ])
-        if (host_binding is not None and len(host_binding.strip()) > 0):
-            cmd.extend(['--opt', 'com.docker.network.bridge.host_binding_ipv4={}'.format(host_binding), ])
-        if (icc is True):
-            cmd.extend(['--opt', 'com.docker.network.bridge.enable_icc=true', ])
-        if (internal is True):
-            cmd.extend(['--internal', ])
-        if (ip_masquerade is True):
-            cmd.extend(['--opt', 'com.docker.network.bridge.enable_ip_masquerade=true', ])
-        if (ip_range is not None and len(ip_range.strip()) > 0):
-            cmd.extend(['--ip-range={}'.format(ip_range), ])
-        if (mtu != 1500):
-            cmd.extend(['--opt', 'com.docker.network.driver.mtu={}'.format(mtu), ])
-        cmd.extend([network, ])
-        run_command(cmd, log=True)
-        # run_command(list(DNET) + ['create', network, ])
-        if update:
-            logger.debug('A forced update of network connections was requested.')
-            # NetworkMixin._refresh_connections()
-    else:
-        logger.debug('the network {} was detected, so do NOT create it.'.format(network))
-
-
-def dnet_connect(container, network, all=False):
-    if (container in probe_running_containers(container=container, all=all)):
-        logger.debug(
-            'The container ({}) is not absent so connect it to the network {}'.format(
-                container, network))
-        if (container not in probe_running_containers(network=network, all=all)):
-            logger.debug(
-                'The container ({}) is not already connected to the network {}'.format(
-                    container, network))
-            run_command(list(DNET) + ['connect', network, container, ], log=True)
-
-
-def dnet_disconnect(container, network):
-    run_command(list(DNET) + ['disconnect', network, container, ], log=True)
 
 
 def dnet_create_connect(rockon):

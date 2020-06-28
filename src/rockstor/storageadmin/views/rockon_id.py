@@ -30,9 +30,9 @@ from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
 from rockon_helpers import (start, stop, install, uninstall,
-                            update, dnet_remove, dnet_create, dnet_disconnect)
+                            update, dnet_remove)
 from system.services import superctl
-from system.docker import docker_status
+from system.docker import docker_status, dnet_create, dnet_disconnect
 from storageadmin.views.network import NetworkMixin
 
 logger = logging.getLogger(__name__)
