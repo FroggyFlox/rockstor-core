@@ -1075,6 +1075,13 @@ RockonSettingsWizardView = WizardView.extend({
                     _this.$('.wizard-btn').prop('disabled', true);
                     alert('Rock-on must be turned off to change its settings.');
                 });
+            } else if (this.rockon.get('host_network')) {
+                var _this = this;
+                this.$('#edit-ports').click(function () {
+                    //disabling the button so that the backbone event is not triggered after the alert click.
+                    _this.$('#edit-ports').prop('disabled', true);
+                    alert('Network settings cannot be altered for this rock-on as it uses host networking.');
+                });
             }
         } else if (this.currentPageNum == (this.pages.length - 2)) {
             this.$('#prev-page').show();

@@ -19,6 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 from django.db import models
 from storageadmin.models import (Share, BridgeConnection)
 import logging
+
+from system.docker import probe_running_containers
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,6 +58,22 @@ class RockOn(models.Model):
                 if (po.uiport and po.publish):
                     return True
         return None
+
+    @property
+    def host_network(self):
+        """
+        :return: True if using host networking.
+        """
+        for co in self.dcontainer_set.all():
+            res = probe_running_containers(
+                container=co.name,
+                network="host",
+                all=True
+            )
+            if len(res) > 1:
+                return True
+            else:
+                return False
 
     class Meta:
         app_label = "storageadmin"
