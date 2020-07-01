@@ -16,19 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import mock
 from rest_framework import status
 from rest_framework.test import APITestCase
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
+from storageadmin.models import NetworkConnection
 
 
 class NetworkTests(APITestMixin, APITestCase):
     # Fixture from single ethernet KVM instance for now to start off new
     # mocking required after recent api change.
-    fixtures = ['test_network.json']
+    fixtures = ["test_network2.json"]
     # TODO: Needs changing as API url different ie connection|devices|refresh
     # see referenced pr in setUpClass
-    BASE_URL = '/api/network'
+    BASE_URL = "/api/network"
 
     @classmethod
     def setUpClass(cls):
@@ -43,80 +45,92 @@ class NetworkTests(APITestMixin, APITestCase):
         # post mocks
 
         # devices map dictionary
-        cls.patch_devices = patch('system.network.get_dev_config')
+        cls.patch_devices = patch("system.network.get_dev_config")
         cls.mock_devices = cls.patch_devices.start()
         cls.mock_devices.return_value = {
-            'lo': {'dtype': 'loopback', 'mac': '00:00:00:00:00:00',
-                   'state': '10 (unmanaged)', 'mtu': '65536'},
-            'eth0': {'dtype': 'ethernet', 'mac': '52:54:00:58:5D:66',
-                     'connection': 'eth0', 'state': '100 (connected)',
-                     'mtu': '1500'}}
+            "lo": {
+                "dtype": "loopback",
+                "mac": "00:00:00:00:00:00",
+                "state": "10 (unmanaged)",
+                "mtu": "65536",
+            },
+            "eth0": {
+                "dtype": "ethernet",
+                "mac": "52:54:00:58:5D:66",
+                "connection": "eth0",
+                "state": "100 (connected)",
+                "mtu": "1500",
+            },
+        }
 
         # connections map dictionary
-        cls.patch_connections = patch('system.network.get_con_config')
+        cls.patch_connections = patch("system.network.get_con_config")
         cls.mock_connections = cls.patch_connections.start()
         cls.mock_connections.return_value = {
-            '8dca3630-8c54-4ad7-8421-327cc2d3d14a':
-                {'ctype': '802-3-ethernet',
-                 'ipv6_addresses': None,
-                 'ipv4_method': 'auto',
-                 'ipv6_method': None,
-                 'ipv6_dns': None,
-                 'name': 'eth0',
-                 'ipv4_addresses': '192.168.124.235/24',
-                 'ipv6_gw': None,
-                 'ipv4_dns': '192.168.124.1',
-                 'state': 'activated',
-                 'ipv6_dns_search': None,
-                 '802-3-ethernet': {
-                     'mac': '52:54:00:58:5D:66',
-                     'mtu': 'auto',
-                     'cloned_mac': None},
-                 'ipv4_gw': '192.168.124.1',
-                 'ipv4_dns_search': None}}
-
+            "8dca3630-8c54-4ad7-8421-327cc2d3d14a": {
+                "ctype": "802-3-ethernet",
+                "ipv6_addresses": None,
+                "ipv4_method": "auto",
+                "ipv6_method": None,
+                "ipv6_dns": None,
+                "name": "eth0",
+                "ipv4_addresses": "192.168.124.235/24",
+                "ipv6_gw": None,
+                "ipv4_dns": "192.168.124.1",
+                "state": "activated",
+                "ipv6_dns_search": None,
+                "802-3-ethernet": {
+                    "mac": "52:54:00:58:5D:66",
+                    "mtu": "auto",
+                    "cloned_mac": None,
+                },
+                "ipv4_gw": "192.168.124.1",
+                "ipv4_dns_search": None,
+            }
+        }
 
         # valid_connection
-        cls.patch_valid_connection = patch('system.network.valid_connection')
+        cls.patch_valid_connection = patch("system.network.valid_connection")
         cls.mock_valid_connection = cls.patch_valid_connection.start()
         cls.mock_valid_connection.return_value = True
 
         # toggle_connection
-        cls.patch_toggle_connection = patch('system.network.toggle_connection')
+        cls.patch_toggle_connection = patch("system.network.toggle_connection")
         cls.mock_toggle_connection = cls.patch_toggle_connection.start()
-        cls.mock_toggle_connection.return_value = [''], [''], 0
+        cls.mock_toggle_connection.return_value = [""], [""], 0
 
         # delete_connection
-        cls.patch_delete_connection = patch('system.network.delete_connection')
+        cls.patch_delete_connection = patch("system.network.delete_connection")
         cls.mock_delete_connection = cls.patch_delete_connection.start()
-        cls.mock_delete_connection.return_value = [''], [''], 0
+        cls.mock_delete_connection.return_value = [""], [""], 0
 
         # reload_connection
-        cls.patch_reload_connection = patch('system.network.reload_connection')
+        cls.patch_reload_connection = patch("system.network.reload_connection")
         cls.mock_reload_connection = cls.patch_reload_connection.start()
-        cls.mock_reload_connection.return_value = [''], [''], 0
+        cls.mock_reload_connection.return_value = [""], [""], 0
 
         # new_connection_helper
-        cls.patch_new_con_helper = patch(
-            'system.network.new_connection_helper')
+        cls.patch_new_con_helper = patch("system.network.new_connection_helper")
         cls.mock_new_con_helper = cls.patch_new_con_helper.start()
-        cls.mock_new_con_helper.return_value = [''], [''], 0
+        cls.mock_new_con_helper.return_value = [""], [""], 0
 
         # new_ethernet_connection
-        cls.patch_new_eth_conn = patch(
-            'system.network.new_ethernet_connection')
+        cls.patch_new_eth_conn = patch("system.network.new_ethernet_connection")
         cls.mock_new_eth_conn = cls.patch_new_eth_conn.start()
-        cls.mock_new_eth_conn.return_value = [''], [''], 0
+        cls.mock_new_eth_conn.return_value = [""], [""], 0
 
         # new_member_helper
-        cls.patch_new_mem_helper = patch('system.network.new_member_helper')
+        cls.patch_new_mem_helper = patch("system.network.new_member_helper")
         cls.mock_new_mem_helper = cls.patch_new_mem_helper.start()
-        cls.mock_new_mem_helper.return_value = [''], [''], 0
+        cls.mock_new_mem_helper.return_value = [""], [""], 0
 
         # TODO: Also need to mock
         # system.network.new_team_connection
         # and
         # system.network.new_bond_connection
+
+        # Set temp models entries as per fixtures
+        cls.temp_connection = NetworkConnection(id=17, name="br-6088a34098e0")
 
     @classmethod
     def tearDownClass(cls):
@@ -131,6 +145,10 @@ class NetworkTests(APITestMixin, APITestCase):
     # 'enp0s3' and 'enp0s8'
     # TODO: AttributeError: 'HttpResponseNotFound' object has no attribute 'data'
     #  received on both below tests. Suspected as due to above referenced API change.
+
+    # def session_login(self):
+    #     self.client.login(username='admin', password='admin')
+
     # def test_get(self):
     #     """
     #     unauthorized access
@@ -141,15 +159,82 @@ class NetworkTests(APITestMixin, APITestCase):
     #                      status.HTTP_200_OK, msg=response.data)
     #
     #     # get with iname
-    #     response = self.client.get('%s/enp0s3' % self.BASE_URL)
+    #     # response = self.client.get('{}/connections/1'.format(self.BASE_URL))
+    #     response = self.client.get('/api/network/connections/1')
     #     self.assertEqual(response.status_code,
-    #                      status.HTTP_200_OK, msg=response.data)
+    #                      status.HTTP_200_OK,
+    #                      msg="Un-expected get() result:\n"
+    #                          "returned = ({}).\n "
+    #                          "expected = ({}).\n ".format(response.status_code, response)
+    #     )
+    #
 
-    # def test_put(self):
-    #     """
-    #     put, change itype
-    #     """
-    #     # TODO: test needs updating, interface now different.
+    @mock.patch("storageadmin.views.network.NetworkConnectionDetailView._nco")
+    def test_put(self, mock_nco):
+        """
+        put, change itype
+        """
+        mock_nco.return_value = self.temp_connection
+
+        # Valid rocknet edit
+        data = {
+            "id": 17,
+            "ctype": "docker",
+            "mtu": "1500",
+            "team_profile": "broadcast",
+            "bond_profile": "balance-rr",
+            "docker_name": "rocknet01",
+            "user_dnet": True,
+            "docker_options": {
+                "aux_address": None,
+                "subnet": "172.20.0.0/16",
+                "icc": True,
+                "ip_masquerade": False,
+                "dgateway": "172.20.0.1",
+                "internal": False,
+                "host_binding": None,
+                "ip_range": None,
+                "containers": [],
+            },
+            "name": "br-6088a34098e0",
+            "uuid": "4692e942-e7f4-4e94-b62f-cc69d44003e3",
+            "state": "activated",
+            "autoconnect": True,
+            "ipv4_method": "manual",
+            "ipv4_addresses": "172.20.0.1/16",
+            "ipv4_gw": None,
+            "ipv4_dns": None,
+            "ipv4_dns_search": None,
+            "ipv6_method": None,
+            "ipv6_addresses": None,
+            "ipv6_gw": None,
+            "ipv6_dns": None,
+            "ipv6_dns_search": None,
+            "master": None,
+            "dname": "rocknet01",
+            "device": "br-6088a34098e0",
+            "devices": ["br-6088a34098e0"],
+            "method": "manual",
+            "ipaddr": "172.20.0.1/16",
+            "gateway": "",
+            "dns_servers": "",
+            "search_domains": "",
+            "aux_address": "",
+            "dgateway": "172.20.0.1",
+            "ip_range": "",
+            "subnet": "172.20.0.0/16",
+            "host_binding": "",
+            "internal": False,
+            "ip_masquerade": False,
+            "icc": True,
+        }
+        response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
+        # e_msg = 'Network connection (invalid) does not exist.'
+        # self.assertEqual(response.data['detail'], e_msg)
+
+        # TODO: test needs updating, interface now different.
+
     #     # invalid network interface
     #     data = {'itype': 'management'}
     #     response = self.client.put('%s/invalid' % self.BASE_URL, data=data)
