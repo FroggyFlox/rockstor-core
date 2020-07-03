@@ -154,84 +154,100 @@ class NetworkTests(APITestMixin, APITestCase):
     #     unauthorized access
     #     """
     #     # get base URL
-    #     response = self.client.get(self.BASE_URL)
+    #     response = self.client.get("{}/connections".format(self.BASE_URL))
     #     self.assertEqual(response.status_code,
-    #                      status.HTTP_200_OK, msg=response.data)
+    #                      status.HTTP_200_OK,
+    #                      msg=response.data)
     #
     #     # get with iname
-    #     # response = self.client.get('{}/connections/1'.format(self.BASE_URL))
-    #     response = self.client.get('/api/network/connections/1')
+    #     response = self.client.get('{}/connections/17'.format(self.BASE_URL))
+    #     # response = self.client.get('/api/network/connections/1')
     #     self.assertEqual(response.status_code,
     #                      status.HTTP_200_OK,
     #                      msg="Un-expected get() result:\n"
     #                          "returned = ({}).\n "
     #                          "expected = ({}).\n ".format(response.status_code, response)
     #     )
-    #
+
+
+    def test_put_invalid_id(self):
+        """
+        test with invalid connection id
+        :return:
+        """
+        data = {"id": 99}
+        response = self.client.put("{}/connections/99".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        e_msg = "Network connection (99) does not exist."
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
+
 
     @mock.patch("storageadmin.views.network.NetworkConnectionDetailView._nco")
     def test_put(self, mock_nco):
         """
-        put, change itype
+        test put with valid connection id
         """
         mock_nco.return_value = self.temp_connection
 
         # Valid rocknet edit
-        data = {
-            "id": 17,
-            "ctype": "docker",
-            "mtu": "1500",
-            "team_profile": "broadcast",
-            "bond_profile": "balance-rr",
-            "docker_name": "rocknet01",
-            "user_dnet": True,
-            "docker_options": {
-                "aux_address": None,
-                "subnet": "172.20.0.0/16",
-                "icc": True,
-                "ip_masquerade": False,
-                "dgateway": "172.20.0.1",
-                "internal": False,
-                "host_binding": None,
-                "ip_range": None,
-                "containers": [],
-            },
-            "name": "br-6088a34098e0",
-            "uuid": "4692e942-e7f4-4e94-b62f-cc69d44003e3",
-            "state": "activated",
-            "autoconnect": True,
-            "ipv4_method": "manual",
-            "ipv4_addresses": "172.20.0.1/16",
-            "ipv4_gw": None,
-            "ipv4_dns": None,
-            "ipv4_dns_search": None,
-            "ipv6_method": None,
-            "ipv6_addresses": None,
-            "ipv6_gw": None,
-            "ipv6_dns": None,
-            "ipv6_dns_search": None,
-            "master": None,
-            "dname": "rocknet01",
-            "device": "br-6088a34098e0",
-            "devices": ["br-6088a34098e0"],
-            "method": "manual",
-            "ipaddr": "172.20.0.1/16",
-            "gateway": "",
-            "dns_servers": "",
-            "search_domains": "",
-            "aux_address": "",
-            "dgateway": "172.20.0.1",
-            "ip_range": "",
-            "subnet": "172.20.0.0/16",
-            "host_binding": "",
-            "internal": False,
-            "ip_masquerade": False,
-            "icc": True,
-        }
+        # data = {
+        #     "id": 17,
+        #     "ctype": "docker",
+        #     "mtu": "1500",
+        #     "team_profile": "broadcast",
+        #     "bond_profile": "balance-rr",
+        #     "docker_name": "rocknet01",
+        #     "user_dnet": True,
+        #     "docker_options": {
+        #         "aux_address": None,
+        #         "subnet": "172.20.0.0/16",
+        #         "icc": True,
+        #         "ip_masquerade": False,
+        #         "dgateway": "172.20.0.1",
+        #         "internal": False,
+        #         "host_binding": None,
+        #         "ip_range": None,
+        #         "containers": [],
+        #     },
+        #     "name": "br-6088a34098e0",
+        #     "uuid": "4692e942-e7f4-4e94-b62f-cc69d44003e3",
+        #     "state": "activated",
+        #     "autoconnect": True,
+        #     "ipv4_method": "manual",
+        #     "ipv4_addresses": "172.20.0.1/16",
+        #     "ipv4_gw": None,
+        #     "ipv4_dns": None,
+        #     "ipv4_dns_search": None,
+        #     "ipv6_method": None,
+        #     "ipv6_addresses": None,
+        #     "ipv6_gw": None,
+        #     "ipv6_dns": None,
+        #     "ipv6_dns_search": None,
+        #     "master": None,
+        #     "dname": "rocknet01",
+        #     "device": "br-6088a34098e0",
+        #     "devices": ["br-6088a34098e0"],
+        #     "method": "manual",
+        #     "ipaddr": "172.20.0.1/16",
+        #     "gateway": "",
+        #     "dns_servers": "",
+        #     "search_domains": "",
+        #     "aux_address": "",
+        #     "dgateway": "172.20.0.1",
+        #     "ip_range": "",
+        #     "subnet": "172.20.0.0/16",
+        #     "host_binding": "",
+        #     "internal": False,
+        #     "ip_masquerade": False,
+        #     "icc": True,
+        # }
+        data = {"id": 17}
         response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
         # e_msg = 'Network connection (invalid) does not exist.'
         # self.assertEqual(response.data['detail'], e_msg)
+
 
         # TODO: test needs updating, interface now different.
 
