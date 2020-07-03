@@ -245,37 +245,7 @@ class NetworkTests(APITestMixin, APITestCase):
         data = {"id": 17}
         response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
-        # e_msg = 'Network connection (invalid) does not exist.'
-        # self.assertEqual(response.data['detail'], e_msg)
 
-
-        # TODO: test needs updating, interface now different.
-
-    #     # invalid network interface
-    #     data = {'itype': 'management'}
-    #     response = self.client.put('%s/invalid' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #                      msg=response.data)
-    #     e_msg = 'Network connection (invalid) does not exist.'
-    #     self.assertEqual(response.data['detail'], e_msg)
-    #
-    #     # edit configuration with out providing config method
-    #     data = {'method': '', 'itype': 'management'}
-    #     response = self.client.put('%s/enp0s3' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #                      msg=response.data)
-    #     e_msg = 'Method must be auto(for dhcp) or manual(for static IP). not: '
-    #     self.assertEqual(response.data['detail'], e_msg)
-    #
-    #     # happy path
-    #     data = {'method': 'auto', 'itype': 'management'}
-    #     response = self.client.put('%s/enp0s3' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_200_OK, msg=response.data)
-    #     self.assertEqual(response.data['itype'], 'management')
-    #
     #     # netmask set to None
     #     data = {'method': 'manual', 'ipaddr': '192.168.56.101',
     #             'netmask': None, 'gateway': '', 'dns_servers': '',
