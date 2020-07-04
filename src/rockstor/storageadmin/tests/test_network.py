@@ -143,8 +143,6 @@ class NetworkTests(APITestMixin, APITestCase):
 
     # Fixture fix1.json has the test data. networks already exits in data are
     # 'enp0s3' and 'enp0s8'
-    # TODO: AttributeError: 'HttpResponseNotFound' object has no attribute 'data'
-    #  received on both below tests. Suspected as due to above referenced API change.
 
     # def session_login(self):
     #     self.client.login(username='admin', password='admin')
@@ -352,4 +350,4 @@ class NetworkTests(APITestMixin, APITestCase):
         self.assertEqual(response.data[0], e_msg,
                          msg="response.data[0] = {}".format(response.data[0]))
 
-
+    # TODO: write test for NetworkConnectionListView._validate_devices
