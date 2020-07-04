@@ -130,7 +130,7 @@ class NetworkTests(APITestMixin, APITestCase):
         # system.network.new_bond_connection
 
         # Set temp models entries as per fixtures
-        cls.temp_connection = NetworkConnection(id=17, name="br-6088a34098e0")
+        cls.temp_rocknet = NetworkConnection(id=17, name="br-6088a34098e0")
 
     @classmethod
     def tearDownClass(cls):
@@ -188,7 +188,7 @@ class NetworkTests(APITestMixin, APITestCase):
         """
         test put with valid connection id
         """
-        mock_nco.return_value = self.temp_connection
+        mock_nco.return_value = self.temp_rocknet
 
         # Valid rocknet edit
         # data = {
@@ -246,23 +246,23 @@ class NetworkTests(APITestMixin, APITestCase):
         response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
+        # Invalid MTU
+        data = {"id": 17, "mtu": 10000}
+        response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.status_code returned was {}".format(response.status_code))
+        e_msg = "The mtu must be an integer in 1500 - 9000 range."
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
 
-    #     # happy path
-    #     data = {'method': 'manual', 'ipaddr': '192.168.56.101',
-    #             'netmask': '225.225.225.0', 'gateway': '',
-    #             'dns_servers': '', 'itype': 'io'}
-    #     response = self.client.put('%s/enp0s3' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_200_OK, msg=response.data)
-    #     self.assertEqual(response.data['itype'], 'io')
-    #
-    #     # happy path
-    #     data = {'method': 'auto', 'itype': 'management'}
-    #     response = self.client.put('%s/enp0s3' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_200_OK, msg=response.data)
-    #     self.assertEqual(response.data['itype'], 'management')
-    #
+        data = {"id": 17, "mtu": 100}
+        response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.status_code returned was {}".format(response.status_code))
+        e_msg = "The mtu must be an integer in 1500 - 9000 range."
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
+
     #     # Setting network interface itype to management when the othet network
     #     # is already set to management
     #     data = {'method': 'auto', 'itype': 'management'}
