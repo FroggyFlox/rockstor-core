@@ -284,6 +284,7 @@ class NetworkTests(APITestMixin, APITestCase):
         test NetworkConnectionListView.post with invalid settings
         :return:
         """
+        # A NetworkConnection object with the same name already exists
         mock_networkconnection.filter.return_value = mock_networkconnection
         mock_networkconnection.exists.return_value = True
 
@@ -296,3 +297,15 @@ class NetworkTests(APITestMixin, APITestCase):
         self.assertEqual(response.data[0], e_msg,
                          msg="response.data[0] = {}".format(response.data[0]))
 
+        # No method is defined
+        mock_networkconnection.filter.return_value = mock_networkconnection
+        mock_networkconnection.exists.return_value = False
+
+        data = {"id": 17, "name": "br-6088a34098e0"}
+        response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.data = {}\n"
+                         "response.status_code = {}".format(response.data, response.status_code))
+        e_msg = "Unsupported config method (None). Supported ones include: (('auto', 'manual'))."
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
