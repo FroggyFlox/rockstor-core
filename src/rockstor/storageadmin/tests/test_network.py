@@ -286,3 +286,18 @@ class NetworkTests(APITestMixin, APITestCase):
     #     e_msg = ('IP: 192.168.56.101 already in use by another '
     #              'interface: enp0s8')
     #     self.assertEqual(response.data['detail'], e_msg)
+
+
+    @mock.patch("storageadmin.views.network.NetworkConnectionDetailView._nco")
+    def test_delete(self, mock_nco):
+        """
+        test put with valid connection id
+        """
+        mock_nco.return_value = self.temp_rocknet
+
+        data = {"id": 17}
+        response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         msg="response.data = {}\n"
+                         "reponse.status_code = {}".format(response.data, response.status_code))
+
