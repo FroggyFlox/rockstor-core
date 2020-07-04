@@ -263,30 +263,6 @@ class NetworkTests(APITestMixin, APITestCase):
         self.assertEqual(response.data[0], e_msg,
                          msg="response.data[0] = {}".format(response.data[0]))
 
-    #     # Setting network interface itype to management when the othet network
-    #     # is already set to management
-    #     data = {'method': 'auto', 'itype': 'management'}
-    #     response = self.client.put('%s/enp0s8' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #                      msg=response.data)
-    #     e_msg = ('Another interface(enp0s3) is already configured for '
-    #              'management. You must disable it first before making this '
-    #              'change.')
-    #     self.assertEqual(response.data['detail'], e_msg)
-    #
-    #     # provide ipaddress thats already been used by another interface
-    #     data = {'method': 'manual', 'ipaddr': '10.0.3.15',
-    #             'netmask': '225.225.225.0', 'gateway': '',
-    #             'dns_servers': '', 'itype': 'io'}
-    #     response = self.client.put('%s/enp0s3' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #                      msg=response.data)
-    #     e_msg = ('IP: 192.168.56.101 already in use by another '
-    #              'interface: enp0s8')
-    #     self.assertEqual(response.data['detail'], e_msg)
-
 
     @mock.patch("storageadmin.views.network.NetworkConnectionDetailView._nco")
     def test_delete(self, mock_nco):
@@ -300,4 +276,23 @@ class NetworkTests(APITestMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK,
                          msg="response.data = {}\n"
                          "reponse.status_code = {}".format(response.data, response.status_code))
+
+
+    @mock.patch("storageadmin.views.network.NetworkConnection.objects")
+    def test_nclistview_post_invalid(self, mock_networkconnection):
+        """
+        test NetworkConnectionListView.post with invalid settings
+        :return:
+        """
+        mock_networkconnection.filter.return_value = mock_networkconnection
+        mock_networkconnection.exists.return_value = True
+
+        data = {"id": 17, "name": "br-6088a34098e0"}
+        response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.data = {}\n"
+                         "response.status_code = {}".format(response.data, response.status_code))
+        e_msg = "Connection name (br-6088a34098e0) is already in use. Choose a different name."
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
 
