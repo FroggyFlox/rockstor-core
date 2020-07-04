@@ -246,31 +246,7 @@ class NetworkTests(APITestMixin, APITestCase):
         response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
 
-    #     # netmask set to None
-    #     data = {'method': 'manual', 'ipaddr': '192.168.56.101',
-    #             'netmask': None, 'gateway': '', 'dns_servers': '',
-    #             'itype': 'io'}
-    #     response = self.client.put('%s/enp0s3' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #                      msg=response.data)
-    #     e_msg = ('Provided netmask value(None) is invalid. You can provide '
-    #              'it in a IP address format(eg: 255.255.255.0) or number of '
-    #              'bits(eg: 24)')
-    #     self.assertEqual(response.data['detail'], e_msg)
-    #
-    #     # Invalid netmask
-    #     data = {'method': 'manual', 'ipaddr': '192.168.56.101',
-    #             'netmask': '111', 'gateway': '',
-    #             'dns_servers': '', 'itype': 'io'}
-    #     response = self.client.put('%s/enp0s3' % self.BASE_URL, data=data)
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #                      msg=response.data)
-    #     e_msg = ('Provided netmask value(111) is invalid. Number of bits in '
-    #              'netmask must be between 1-32')
-    #     self.assertEqual(response.data['detail'], e_msg)
-    #
+
     #     # happy path
     #     data = {'method': 'manual', 'ipaddr': '192.168.56.101',
     #             'netmask': '225.225.225.0', 'gateway': '',
