@@ -136,10 +136,9 @@ def probe_running_containers(container=None, network=None, all=False):
     if network:
         cmd.extend((['--filter', 'network={}'.format(network), ]))
     if container:
-        if all:
-            cmd.extend((['-a', ]))
-        else:
-            cmd.extend((running_filters + ['--filter', 'name={}'.format(container), ]))
+        # if all:
+        #     cmd.extend((['-a', ]))
+        cmd.extend((running_filters + ['--filter', 'name={}'.format(container), ]))
     else:
         cmd.extend((running_filters))
     o, e, rc = run_command(cmd)
