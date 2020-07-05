@@ -411,6 +411,7 @@ class NetworkTests(APITestMixin, APITestCase):
     def test_nclistview_post_devices_not_list(self, mock_networkdevice):
 
         mock_networkdevice.get.return_value = self.temp_device_eth0
+        ## Team
         # Devices not a list for team connection
         data = {"id": 99,
                 "name": "Wired connection 99",
@@ -434,6 +435,39 @@ class NetworkTests(APITestMixin, APITestCase):
                 "method": "auto",
                 "ctype": "team",
                 "team_profile": "broadcast"
+                }
+        response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.data = {}\n"
+                         "response.status_code = {}".format(response.data, response.status_code))
+        e_msg = "A minimum of 2 devices are required."
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
+
+        ## Bond
+        # Devices not a list for team connection
+        data = {"id": 99,
+                "name": "Wired connection 99",
+                "devices": "eth0",
+                "method": "auto",
+                "ctype": "bond",
+                "bond_profile": "balance-rr"
+                }
+        response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.data = {}\n"
+                         "response.status_code = {}".format(response.data, response.status_code))
+        e_msg = "devices must be a list"
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
+
+        # Not enough devices for team connection
+        data = {"id": 99,
+                "name": "Wired connection 99",
+                "devices": ["eth0", ],
+                "method": "auto",
+                "ctype": "bond",
+                "bond_profile": "balance-rr"
                 }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
