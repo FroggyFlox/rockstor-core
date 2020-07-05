@@ -414,7 +414,7 @@ class NetworkTests(APITestMixin, APITestCase):
         # Devices not a list for team connection
         data = {"id": 99,
                 "name": "Wired connection 99",
-                "device": "eth0",
+                "devices": "eth0",
                 "method": "auto",
                 "ctype": "team",
                 "team_profile": "broadcast"
@@ -427,14 +427,10 @@ class NetworkTests(APITestMixin, APITestCase):
         self.assertEqual(response.data[0], e_msg,
                          msg="response.data[0] = {}".format(response.data[0]))
 
-
-    @mock.patch("storageadmin.views.network.NetworkDevice.objects")
-    def test_nclistview_post_devices_short_list(self, mock_networkdevice):
-        mock_networkdevice.get.return_value = self.temp_device_eth0
         # Not enough devices for team connection
         data = {"id": 99,
                 "name": "Wired connection 99",
-                "device": ["eth0", ],
+                "devices": ["eth0", ],
                 "method": "auto",
                 "ctype": "team",
                 "team_profile": "broadcast"
