@@ -21,7 +21,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from mock import patch
 from storageadmin.tests.test_api import APITestMixin
-from storageadmin.models import NetworkConnection
+from storageadmin.models import NetworkConnection, NetworkDevice
 
 
 class NetworkTests(APITestMixin, APITestCase):
@@ -130,7 +130,27 @@ class NetworkTests(APITestMixin, APITestCase):
         # system.network.new_bond_connection
 
         # Set temp models entries as per fixtures
+
+        # "autoconnect": true,
+        # "name": "Wired connection 1",
+        # "ipv6_dns": null,
+        # "ipv4_addresses": "192.168.218.163/16",
+        # "ipv6_gw": null,
+        # "ipv6_addresses": null,
+        # "ipv4_dns": "192.168.0.1",
+        # "state": "activated",
+        # "ipv4_method": "auto",
+        # "ipv6_dns_search": null,
+        # "master": null,
+        # "ipv4_gw": "192.168.0.1",
+        # "ipv4_dns_search": null,
+        # "ipv6_method": null,
+        # "uuid": "cebaa3e9-2019-339c-b436-65c2d58ebf45"
+
+        cls.temp_ethernet = NetworkConnection(id=1, name="Wired connection 1")
+        cls.temp_device_eth0 = NetworkDevice(id=2, name="eth0")
         cls.temp_rocknet = NetworkConnection(id=17, name="br-6088a34098e0")
+        cls.temp_device = NetworkDevice(id=12, name="br-6088a34098e0")
 
     @classmethod
     def tearDownClass(cls):
@@ -351,3 +371,81 @@ class NetworkTests(APITestMixin, APITestCase):
                          msg="response.data[0] = {}".format(response.data[0]))
 
     # TODO: write test for NetworkConnectionListView._validate_devices
+
+    # @mock.patch("storageadmin.views.network.NetworkConnection.objects")
+    # @mock.patch("storageadmin.views.network.NetworkDevice.objects")
+    def test_nclistview_post_devices(self):
+        """
+        test NetworkConnectionListView.post devices combinations
+        :return:
+        """
+        # mock_networkconnection.filter.return_value = mock_networkconnection
+        # mock_networkconnection.exists.return_value = False
+        # mock_networkdevice.get.return_value = self.temp_device
+
+        # Unknown device for ethernet connection
+        data = {"id": 99,
+                "name": "Wired connection 99",
+                "device": "eth0",
+                "method": "auto",
+                "ctype": "ethernet"}
+        response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.data = {}\n"
+                         "response.status_code = {}".format(response.data, response.status_code))
+        e_msg = "Unknown network device (eth0)."
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
+
+        # Devices not a list for team connection
+        # response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
+        # self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #                  msg="response.data = {}\n"
+        #                  "response.status_code = {}".format(response.data, response.status_code))
+        # e_msg = "Unknown network device (eth0)."
+        # self.assertEqual(response.data[0], e_msg,
+        #                  msg="response.data[0] = {}".format(response.data[0]))
+
+
+    @mock.patch("storageadmin.views.network.NetworkDevice.objects")
+    def test_nclistview_post_devices_not_list(self, mock_networkdevice):
+
+        mock_networkdevice.get.return_value = self.temp_device_eth0
+        # Devices not a list for team connection
+        data = {"id": 99,
+                "name": "Wired connection 99",
+                "device": "eth0",
+                "method": "auto",
+                "ctype": "team",
+                "team_profile": "broadcast"
+                }
+        response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.data = {}\n"
+                         "response.status_code = {}".format(response.data, response.status_code))
+        e_msg = "devices must be a list"
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
+
+
+    @mock.patch("storageadmin.views.network.NetworkDevice.objects")
+    def test_nclistview_post_devices_short_list(self, mock_networkdevice):
+        mock_networkdevice.get.return_value = self.temp_device_eth0
+        # Not enough devices for team connection
+        data = {"id": 99,
+                "name": "Wired connection 99",
+                "device": ["eth0", ],
+                "method": "auto",
+                "ctype": "team",
+                "team_profile": "broadcast"
+                }
+        response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
+                         msg="response.data = {}\n"
+                         "response.status_code = {}".format(response.data, response.status_code))
+        e_msg = "A minimum of 2 devices are required."
+        self.assertEqual(response.data[0], e_msg,
+                         msg="response.data[0] = {}".format(response.data[0]))
+
+
+
