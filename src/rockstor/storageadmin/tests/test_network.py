@@ -130,23 +130,6 @@ class NetworkTests(APITestMixin, APITestCase):
         # system.network.new_bond_connection
 
         # Set temp models entries as per fixtures
-
-        # "autoconnect": true,
-        # "name": "Wired connection 1",
-        # "ipv6_dns": null,
-        # "ipv4_addresses": "192.168.218.163/16",
-        # "ipv6_gw": null,
-        # "ipv6_addresses": null,
-        # "ipv4_dns": "192.168.0.1",
-        # "state": "activated",
-        # "ipv4_method": "auto",
-        # "ipv6_dns_search": null,
-        # "master": null,
-        # "ipv4_gw": "192.168.0.1",
-        # "ipv4_dns_search": null,
-        # "ipv6_method": null,
-        # "uuid": "cebaa3e9-2019-339c-b436-65c2d58ebf45"
-
         cls.temp_ethernet = NetworkConnection(id=1, name="Wired connection 1")
         cls.temp_device_eth0 = NetworkDevice(id=2, name="eth0")
         cls.temp_rocknet = NetworkConnection(id=17, name="br-6088a34098e0")
@@ -167,25 +150,27 @@ class NetworkTests(APITestMixin, APITestCase):
     # def session_login(self):
     #     self.client.login(username='admin', password='admin')
 
-    # def test_get(self):
-    #     """
-    #     unauthorized access
-    #     """
-    #     # get base URL
-    #     response = self.client.get("{}/connections".format(self.BASE_URL))
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_200_OK,
-    #                      msg=response.data)
-    #
-    #     # get with iname
-    #     response = self.client.get('{}/connections/17'.format(self.BASE_URL))
-    #     # response = self.client.get('/api/network/connections/1')
-    #     self.assertEqual(response.status_code,
-    #                      status.HTTP_200_OK,
-    #                      msg="Un-expected get() result:\n"
-    #                          "returned = ({}).\n "
-    #                          "expected = ({}).\n ".format(response.status_code, response)
-    #     )
+    def test_get_base(self):
+        """
+        unauthorized access
+        """
+        # get base URL
+        response = self.client.get("{}/connections".format(self.BASE_URL))
+        self.assertEqual(response.status_code,
+                         status.HTTP_200_OK,
+                         msg="Un-expected get() result:\n"
+                             "response.status_code = ({}).\n "
+                             "response.data = ({}).\n ".format(response.status_code, response.data))
+
+
+        # response = self.client.get('{}/connections/17'.format(self.BASE_URL))
+        # # response = self.client.get('/api/network/connections/1')
+        # self.assertEqual(response.status_code,
+        #                  status.HTTP_200_OK,
+        #                  msg="Un-expected get() result:\n"
+        #                      "response.status_code = ({}).\n "
+        #                      "response.data = ({}).\n ".format(response.status_code, response.data)
+        # )
 
 
     def test_put_invalid_id(self):
