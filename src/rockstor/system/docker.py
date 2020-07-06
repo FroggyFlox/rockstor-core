@@ -195,6 +195,14 @@ def dnet_create(network, aux_address=None, dgateway=None, host_binding=None,
 
 
 def dnet_connect(container, network, all=False):
+    """
+    Simple wrapper around docker connect with prior check for the existence of the container
+    and the lack of current connection to desired network.
+    :param container:
+    :param network:
+    :param all:
+    :return:
+    """
     if (container in probe_running_containers(container=container, all=all)):
         logger.debug(
             'The container ({}) is not absent so connect it to the network {}'.format(
