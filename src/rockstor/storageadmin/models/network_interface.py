@@ -140,6 +140,11 @@ class NetworkConnection(models.Model):
 
     @property
     def docker_options(self):
+        """
+        Gather all connection's settings in a dict to be displayed in the UI connection form
+        needed to edit an existing docker network connection.
+        :return:
+        """
         logger.debug('The property method docker_options has been triggered')
         docker_options = {}
         if self.bridgeconnection_set.count() > 0:
@@ -214,6 +219,11 @@ class NetworkDevice(models.Model):
 
     @property
     def dev_name(self):
+        """
+        Return the user-friendly docker_name as device name for bridge connections
+        to be displayed in the network widget on the dashboard.
+        :return:
+        """
         if ((self.dtype == 'bridge') and (self.connection is not None)):
             return self.connection.docker_name
         return self.name

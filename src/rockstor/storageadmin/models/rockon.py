@@ -51,6 +51,12 @@ class RockOn(models.Model):
 
     @property
     def ui_publish(self):
+        """
+        Returns True if the rock-on has a container with a UI port defined
+        and set to be published. This property is used to decide whether or
+        not to disable a rock-on's UI button.
+        :return:
+        """
         if (not self.ui):
             return None
         for co in self.dcontainer_set.all():
@@ -62,6 +68,8 @@ class RockOn(models.Model):
     @property
     def host_network(self):
         """
+        Checks whether the rock-on uses host networking and disable networking
+        post-install customization options accordingly.
         :return: True if using host networking.
         """
         for co in self.dcontainer_set.all():
