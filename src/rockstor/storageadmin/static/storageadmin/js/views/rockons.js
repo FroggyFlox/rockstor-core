@@ -1303,8 +1303,6 @@ RockonAddLabel = RockstorWizardPage.extend({
 
 RockonEditPorts = RockstorWizardPage.extend({
     initialize: function() {
-        // this.template = window.JST.rockons_add_labels;
-        // this.sub_template = window.JST.rockons_add_labels_form;
         this.template = window.JST.rockons_edit_ports;
         this.sub_template = window.JST.rockons_edit_ports_form;
         this.rockon = this.model.get('rockon');
@@ -1504,6 +1502,8 @@ RockonEditPorts = RockstorWizardPage.extend({
         //         require_from_group: [1, ".ports-group"]
         //     };
         // });
+
+        // Get current published ports from database
         var psDb = [];
         this.ports.each(function (port) {
             if (port.attributes.publish) {
@@ -1575,10 +1575,10 @@ RockonEditPorts = RockstorWizardPage.extend({
 
         // Get join-networks data
         var _this = this;
-        var net_data2 = _this.$('#join-networks').getJSON();
-        Object.keys(net_data2).forEach((key) =>
-            (net_data2[key] === null) && delete net_data2[key]);
-        console.log('net_data2 is = ', net_data2);
+        var rocknets_data = _this.$('#join-networks').getJSON();
+        Object.keys(rocknets_data).forEach((key) =>
+            (rocknets_data[key] === null) && delete rocknets_data[key]);
+        console.log('rocknets_data is = ', rocknets_data);
 
         // Compare to rocknets in database
         var differentRocknets = function (new_nets, reference) {
@@ -1639,12 +1639,12 @@ RockonEditPorts = RockstorWizardPage.extend({
             }
         };
 
-        console.log('Do Rocknets differ? ', differentRocknets(net_data2, this.rocknets_map));
+        console.log('Do Rocknets differ? ', differentRocknets(rocknets_data, this.rocknets_map));
 
         if (this.ports_form.valid()) {
             console.log('ports_form IS valid');
             var update_mode = 'normal';
-        } else if (differentRocknets(net_data2, this.rocknets_map)) {
+        } else if (differentRocknets(rocknets_data, this.rocknets_map)) {
             console.log('ports_form is NOT valid and Rocknets differ');
             update_mode = 'live';
         } else {
@@ -1665,7 +1665,9 @@ RockonEditPorts = RockstorWizardPage.extend({
         // var field_data = $('input[name^=publish]').map(function(idx, elem) {
         //     return $(elem).attr('checked');
         // }).get();
-        var edit_ports ={};
+
+        // Get ports publish states from form
+        var edit_ports = {};
         $('input[name^=publish]').map(function(idx, elem) {
             var pstatus = 'unchecked';
             if ($(elem).attr('checked') == 'checked') {
@@ -1691,7 +1693,7 @@ RockonEditPorts = RockstorWizardPage.extend({
         // console.log('net_data3 is = ', net_data3);
         // console.log('cnets2 is = ', cnets2);
 
-        this.new_cnets = net_data2;
+        this.new_cnets = rocknets_data;
         this.model.set('new_cnets', this.new_cnets);
 
         console.log('Print this = ', this);
@@ -1792,7 +1794,7 @@ RockonSettingsSummary = RockstorWizardPage.extend({
         });
         Handlebars.registerHelper('display_newCnets', function() {
             // Display newly-defined rocknets and their corresponding container
-            // for confimation before submit in settings_summary_table.jst
+            // for confirmation before submit in settings_summary_table.jst
             var html = '';
             for (new_cnet in this.new_cnets) {
                 html += '<tr>';
