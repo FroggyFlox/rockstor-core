@@ -1522,6 +1522,8 @@ RockonEditPorts = RockstorWizardPage.extend({
             if ($(element).attr('checked') == 'checked') {
                 result.push('checked');
                 result.push(psDb.indexOf($(element).attr('id')) != -1);
+                console.log($(element).attr('id'));
+                console.log(psDb.indexOf($(element).attr('id')) != -1);
                 return psDb.indexOf($(element).attr('id')) != -1;
                 // return false;
                 //        return True if ID is not in psDb
@@ -1529,6 +1531,8 @@ RockonEditPorts = RockstorWizardPage.extend({
             } else if ($(element).attr('checked') != 'checked') {
                 result.push('unchecked');
                 result.push(psDb.indexOf($(element).attr('id')) == -1);
+                console.log($(element).attr('id'));
+                console.log(psDb.indexOf($(element).attr('id')) == -1);
                 return psDb.indexOf($(element).attr('id')) == -1;
                 // return false;
                 //        return True if ID is in psDb
@@ -1542,19 +1546,58 @@ RockonEditPorts = RockstorWizardPage.extend({
             // }
         );
 
+        $.validator.addMethod("checkPortGroups", function (value, element, options) {
+            console.log('element is ', element);
+            // var val = $(options[0], element.form).filter(function () {
+            //     console.log('JSTHIS is ', $(this));
+            //     console.log('this.attr(checked) is ', $(this).attr('checked'));
+            //     return $(this).attr('checked');
+            // }).attr('checked');
+            var val = element.checked;
+            console.log('VAL is ', val);
+
+            if (val) {
+                console.log('element ID is ', $(element).attr('id'));
+                console.log('port is CHECKED');
+                console.log(psDb.indexOf($(element).attr('id')) != -1);
+                valid = psDb.indexOf($(element).attr('id')) != -1;
+                // return false;
+                //        return True if ID is not in psDb
+                //        else return False
+            } else {
+                console.log('element ID is ', $(element).attr('id'));
+                console.log('port is UNCHECKED');
+                console.log(psDb.indexOf($(element).attr('id')) == -1);
+                valid = psDb.indexOf($(element).attr('id')) == -1;
+                // return false;
+                //        return True if ID is in psDb
+                //        else return False
+            }
+            console.log('VALID is ', valid);
+            return valid;
+        }, '');
+
         this.ports_form = this.$('#edit-ports-form');
+        var rules_ports = {};
+        this.ports.each(function(port) {
+            rules_ports[port.id] = {
+                require_from_group: [1, '.ports-group'],
+                checkPortGroups: ['.ports-group']
+            };
+        });
+        console.log("rules_ports = ", rules_ports);
         this.ports_validator = this.ports_form.validate({
             debug: true,
-            // rules: rules_ports,
+            rules: rules_ports,
             groups: {
                 'ports-group': 'publish[]'
             },
-            rules: {
-                'publish[]': {
-                    checkPorts: true,
-                    required: false
-                }
-            }
+            // rules: {
+            //     'publish[]': {
+            //         checkPorts: true,
+            //         required: false
+            //     }
+            // }
             // messages: messages_ports
             // messages: {
             //     'publish[]': 'Was a port modified?'
@@ -1573,6 +1616,41 @@ RockonEditPorts = RockstorWizardPage.extend({
     save: function() {
         console.log('save() was triggered');
 
+        // // Verify that settings were altered
+        // 1. change in ports' publish state?
+        // Get ports publish states from form
+        var edit_ports = {};
+        // $('input[name^=publish]').map(function(idx, elem) {
+        $('.ports-group').map(function(idx, elem) {
+            var pstatus = 'unchecked';
+            if ($(elem).attr('checked') == 'checked') {
+                pstatus = 'checked';
+            }
+            return edit_ports[$(elem).attr('id')] = pstatus;
+        }).get();
+        console.log('edit_ports is = ', edit_ports);
+
+        // Get current published ports from database
+        var psDb = {};
+        this.ports.each(function (port) {
+            var state = "unchecked";
+            if (port.attributes.publish) {
+                state = "checked";
+            }
+            psDb[port.id] = state;
+        });
+        console.log('psDb = ', psDb);
+
+        // Compare values from form to those in database
+        var differentPublishPorts = function (new_pbPorts, reference) {
+            // If the length of both objects differ, return true
+            // For each key in new_pbPorts:
+            //  - return true if their values differ
+            //  - continue to next key
+            return (JSON.stringify(new_pbPorts) !== JSON.stringify(reference));
+        }
+
+        // 2. change in rocknets?
         // Get join-networks data
         var _this = this;
         var rocknets_data = _this.$('#join-networks').getJSON();
@@ -1641,8 +1719,9 @@ RockonEditPorts = RockstorWizardPage.extend({
 
         console.log('Do Rocknets differ? ', differentRocknets(rocknets_data, this.rocknets_map));
 
-        if (this.ports_form.valid()) {
-            console.log('ports_form IS valid');
+        // if (this.ports_form.valid()) {
+        if (JSON.stringify(edit_ports) !== JSON.stringify(psDb)) {
+            console.log('ports_form differs from database');
             var update_mode = 'normal';
         } else if (differentRocknets(rocknets_data, this.rocknets_map)) {
             console.log('ports_form is NOT valid and Rocknets differ');
@@ -1666,19 +1745,6 @@ RockonEditPorts = RockstorWizardPage.extend({
         //     return $(elem).attr('checked');
         // }).get();
 
-        // Get ports publish states from form
-        var edit_ports = {};
-        $('input[name^=publish]').map(function(idx, elem) {
-            var pstatus = 'unchecked';
-            if ($(elem).attr('checked') == 'checked') {
-                pstatus = 'checked';
-            }
-            return edit_ports[$(elem).attr('id')] = pstatus;
-        }).get();
-
-        console.log('edit_ports is = ', edit_ports);
-        this.edit_ports = edit_ports;
-        this.model.set('edit_ports', this.edit_ports);
 
         // Get join-networks data
         // var field_data = $(".form-control").val();
@@ -1693,6 +1759,9 @@ RockonEditPorts = RockstorWizardPage.extend({
         // console.log('net_data3 is = ', net_data3);
         // console.log('cnets2 is = ', cnets2);
 
+        // Save to model
+        this.edit_ports = edit_ports;
+        this.model.set('edit_ports', this.edit_ports);
         this.new_cnets = rocknets_data;
         this.model.set('new_cnets', this.new_cnets);
 

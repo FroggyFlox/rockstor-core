@@ -26,7 +26,7 @@
                     <td>{{this.label}}</td>
                     <td>{{this.hostp}}</td>
                     <td>{{this.containerp}}</td>
-                    <td><input class="checkbox-inline ports-group" type="checkbox" id="{{this.id}}" name="publish[]" {{#if
+                    <td><input class="checkbox-inline ports-group" type="checkbox" id="{{this.id}}" name="{{this.id}}" {{#if
                                this.publish}}checked{{/if}}>{{#if this.uiport}}&nbsp<i
                             class="glyphicon glyphicon-exclamation-sign"
                             title="This port is used to access the Rock-on's webUI. If you unpublish it, you won't be able to access it directly."
