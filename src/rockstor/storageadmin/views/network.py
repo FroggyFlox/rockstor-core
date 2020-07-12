@@ -28,8 +28,8 @@ from smart_manager.models import Service
 from storageadmin.util import handle_exception
 from storageadmin.serializers import (NetworkDeviceSerializer,
                                       NetworkConnectionSerializer)
-from storageadmin.views.rockon_helpers import (dnet_remove)
-from system.docker import docker_status, probe_running_containers, dnet_create, dnet_connect, dnet_disconnect
+from system.docker import docker_status, probe_running_containers, dnet_create, dnet_connect, dnet_disconnect, \
+    dnet_remove
 import system.network as sysnet
 import rest_framework_custom as rfc
 

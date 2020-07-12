@@ -264,30 +264,6 @@ def labels_ops(container):
     return labels_list
 
 
-def dnet_remove(container=None, network=None):
-    """
-    This method uses the docker toolset to remove a user-defined network.
-    In Rockstor, these can be created either by a container_links object in a
-    rock-on definition, or by the user. We thus need to account for both cases.
-    :param container: DContainer object
-    :param network: string of network name as seen by `docker network ls`
-    :return:
-    """
-    #TODO: could this be simplified by taking the "container" mode out?
-    if container:
-        for lo in DContainerLink.objects.filter(destination=container):
-            o, e, rc = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])
-            logger.debug('the network name is: {}'.format(lo.name))
-            if (lo.name in o):
-                logger.debug('the network {} WAS detected, so delete it now.'.format(lo.name))
-                run_command(list(DNET) + ['rm', lo.name, ])
-                logger.debug('the network {} is now deleted.'.format(lo.name))
-            else:
-                logger.debug('the network {} was NOT detected, so nothing to do.'.format(lo.name))
-    elif network:
-        run_command(list(DNET) + ['rm', network, ])
-
-
 def dnet_create_connect(rockon):
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         logger.debug('The container name is {}'.format(c.name))

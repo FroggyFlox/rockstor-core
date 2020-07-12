@@ -30,9 +30,9 @@ from storageadmin.serializers import RockOnSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
 from rockon_helpers import (start, stop, install, uninstall,
-                            update, dnet_remove)
+                            update)
 from system.services import superctl
-from system.docker import docker_status, dnet_create, dnet_disconnect
+from system.docker import docker_status, dnet_create, dnet_disconnect, dnet_remove
 from storageadmin.views.network import NetworkMixin
 
 logger = logging.getLogger(__name__)
@@ -201,9 +201,9 @@ class RockOnIdView(rfc.GenericView, NetworkMixin):
                     DVolume.objects.filter(container=co, uservol=True).delete()
                     DContainerLabel.objects.filter(container=co).delete()
                     DContainerNetwork.objects.filter(container=co).delete()
-                    if DContainerLink.objects.filter(destination=co):
+                    for lo in DContainerLink.objects.filter(destination=co):
                         logger.debug('One of the containers [{} ({})] has a link'.format(co, co.name))
-                        dnet_remove(container=co)
+                        dnet_remove(network=lo.name)
                     # Reset all ports to a published state (if any)
                     for po in DPort.objects.filter(container=co):
                         logger.debug('The port {} ({}) of container {} will be reset'.format(po.id, po.description, po.container_id))

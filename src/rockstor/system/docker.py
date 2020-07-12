@@ -216,3 +216,17 @@ def dnet_connect(container, network, all=False):
 
 def dnet_disconnect(container, network):
     run_command(list(DNET) + ['disconnect', network, container, ], log=True)
+
+
+def dnet_remove(network=None):
+    """
+    This method uses the docker toolset to remove a docker network.
+    As this would throw an error if the network does not exist, we need
+    to first verify its presence.
+    :param network: string of network name as seen by `docker network ls`
+    :return:
+    """
+    # First, verify the network still exists
+    if network in dnets():
+        logger.debug('the network {} WAS detected, so delete it now.'.format(network))
+        run_command(list(DNET) + ['rm', network, ], log=True)
