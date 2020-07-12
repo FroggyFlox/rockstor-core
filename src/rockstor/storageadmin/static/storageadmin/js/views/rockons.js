@@ -1410,6 +1410,8 @@ RockonEditPorts = RockstorWizardPage.extend({
         // var user_dnets = this.networks.userDnet();
         // user_dnets.fetch();
         // console.log('user_dnets is = ', user_dnets);
+
+        // Fetch list of docker networks available to be used as rocknets
         this.user_dnets = [];
         for (var i = 0; i < this.networks.length; i++) {
             var n = this.networks.at(i);
@@ -1439,6 +1441,7 @@ RockonEditPorts = RockstorWizardPage.extend({
                 return c.toJSON();
             })
         }));
+
         // Initialize and configure Rocknets choice form
         this.$('.form-control').each(function(index, element) {
             $(this).select2({
@@ -1612,7 +1615,6 @@ RockonEditPorts = RockstorWizardPage.extend({
             return $.Deferred().reject();
         }
         console.log('Update_mode is set as ', update_mode);
-        this.model.set('update_mode', update_mode);
 
         // if (!this.ports_form.valid()) {
         //     console.log('ports_form is NOT valid');
@@ -1643,6 +1645,7 @@ RockonEditPorts = RockstorWizardPage.extend({
         this.model.set('edit_ports', this.edit_ports);
         this.new_cnets = rocknets_data;
         this.model.set('new_cnets', this.new_cnets);
+        this.model.set('update_mode', update_mode);
 
         console.log('Print this = ', this);
         return $.Deferred().resolve();
@@ -1755,6 +1758,8 @@ RockonSettingsSummary = RockstorWizardPage.extend({
         });
         var _this = this;
         Handlebars.registerHelper('isPublished', function(port, state) {
+            // Adds "(Unpublished)" text next to the port number
+            // if it is (or set to be) unpublished
             var html = '';
             if (_this.model.get('edit_ports')){
                 var edit_ports = _this.model.get('edit_ports');
@@ -1802,6 +1807,7 @@ RockonSettingsComplete = RockstorWizardPage.extend({
         if (document.getElementById('next-page').disabled) return false;
         document.getElementById('next-page').disabled = true;
 
+        // Collect all data to be sent during the API call
         var dataObj = {};
         if (!_.isEmpty(this.shares)) dataObj['shares'] = this.shares;
         if (!_.isEmpty(this.new_labels)) dataObj['labels'] = this.new_labels;

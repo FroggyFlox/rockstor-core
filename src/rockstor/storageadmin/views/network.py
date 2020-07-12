@@ -100,6 +100,8 @@ class NetworkMixin(object):
                 logger.debug('Views: docker_name is {} from db, {} from config'.format(brco.docker_name, config['docker_name']))
                 if (not DContainerLink.objects.filter(name=brco.docker_name)) and (
                     'docker0' not in brco.docker_name):
+                    # The bridge connection is not the default docker bridge network
+                    # and isn't a docker bridge network defined as a container_link
                     logger.debug('{} is not docker0 and is not in Container_Links'.format(brco.docker_name))
                     brco.usercon = True
                 brco.save()
@@ -108,6 +110,8 @@ class NetworkMixin(object):
                 docker_name = config['docker_name']
                 if (not DContainerLink.objects.filter(name=docker_name)) and (
                     'docker0' not in docker_name):
+                    # The bridge connection is not the default docker bridge network
+                    # and isn't a docker bridge network defined as a container_link
                     logger.debug('{} is not docker0 and is not in Container_Links'.format(docker_name))
                     usercon = True
                 BridgeConnection.objects.create(connection=co, usercon=usercon, **config)
@@ -291,12 +295,11 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                 mtu = request.data.get('mtu', 1500)
                 subnet = request.data.get('subnet', None)
 
-            # connection type can be one of ethernet, team or bond
-            ctype = request.data.get("ctype")
-            if ctype not in self.ctypes:
-                e_msg = (
-                    "Unsupported connection type ({}). Supported ones include: ({})."
-                ).format(ctype, self.ctypes)
+            # connection type can be one of ethernet, team, bond, or docker
+            ctype = request.data.get('ctype')
+            if (ctype not in self.ctypes):
+                e_msg = ('Unsupported connection type ({}). Supported ones '
+                         'include: ({}).').format(ctype, self.ctypes)
                 handle_exception(Exception(e_msg), request)
             devices = request.data.get("devices", None)
             if ctype == "team":
@@ -428,6 +431,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                 logger.debug('Remove the Docker network named {}'.format(docker_name))
                 dnet_remove(network=docker_name)
 
+                # Create the Docker network with new settings
                 try:
                     logger.debug('Create the Docker network named {}'.format(dname))
                     dnet_create(dname, aux_address, dgateway, host_binding, icc,
@@ -528,11 +532,11 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
         with self._handle_exception(request):
             nco = self._nco(request, id)
             logger.debug('nco.id is {}, and nco.name is {}'.format(nco.id, nco.name))
-            if nco.bridgeconnection_set.first() > 0: # If docker network
+            if nco.bridgeconnection_set.first() > 0:  # If docker network
                 brco = nco.bridgeconnection_set.first()
                 logger.debug('The connection is a Docker network: {}'.format(brco.docker_name))
                 logger.debug('Is it a user-defined Docker?: {}'.format(brco.usercon))
-                ## use docker tools to remove network
+                # use docker tools to remove network
                 # check for running containers and disconnect them first
                 clist = probe_running_containers(network=brco.docker_name)
                 if len(clist) > 1:

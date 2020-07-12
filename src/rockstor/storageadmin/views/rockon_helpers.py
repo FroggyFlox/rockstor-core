@@ -110,6 +110,15 @@ def generic_stop(rockon):
 
 @task()
 def update(rid, live=False):
+    """
+    Guides general update procedure for a rock-on settings:
+      - if a live-update is possible, first start the rock-on and apply new settings
+      - if a live-update is impossible, first uninstall the rock-on and re-install
+        using the new settings
+    :param rid:
+    :param live:
+    :return:
+    """
     logger.debug('LIVE-update is set as {}'.format(live))
     if live:
         logger.debug('A live-update will be attempted.')
@@ -117,6 +126,7 @@ def update(rid, live=False):
         try:
             rockon = RockOn.objects.get(id=rid)
             logger.debug('rid is {} and rockon is {}'.format(rid, rockon))
+            # Ensure the rock-on is running before attempting network connection
             start(rid)
             dnet_create_connect(rockon)
         except Exception as e:
@@ -129,7 +139,7 @@ def update(rid, live=False):
             return aw.api_call(url, data={'new_state': new_state, },
                                calltype='post', save_error=False)
     else:
-        logger.debug('NORMAL-update of the rockonas {}'.format(live))
+        logger.debug('NORMAL-update of the rockon as {}'.format(live))
         uninstall(rid, new_state='pending_update')
         install(rid)
 
@@ -186,7 +196,7 @@ def port_ops(container):
     ops_list = []
     for po in DPort.objects.filter(container=container):
         logger.debug('Test if port {} ({}) should be published'.format(po.id, po.description))
-        # @todo: Skip po if export = false
+        # Skip the port if no set to be published
         if (po.publish is not True):
             logger.debug('The port {} ({}) should not be published ({}), so skip it!'. format(po.id, po.description, po.publish))
             continue
@@ -263,6 +273,7 @@ def dnet_remove(container=None, network=None):
     :param network: string of network name as seen by `docker network ls`
     :return:
     """
+    #TODO: could this be simplified by taking the "container" mode out?
     if container:
         for lo in DContainerLink.objects.filter(destination=container):
             o, e, rc = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])
