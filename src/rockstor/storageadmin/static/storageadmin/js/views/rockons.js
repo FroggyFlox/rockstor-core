@@ -1492,118 +1492,6 @@ RockonEditPorts = RockstorWizardPage.extend({
 
         console.log('This during renderPorts', this);
 
-        // // Use form validation to verify settings were altered
-        // change in ports' publish state?
-        // var rules_ports = {};
-        // this.ports.each(function(port) {
-        //     rules_ports['publish[' + port.id + ']'] = {
-        //         checkPorts: true,
-        //         // required: false
-        //         require_from_group: [1, ".ports-group"]
-        //     };
-        // });
-
-        // Get current published ports from database
-        var psDb = [];
-        this.ports.each(function (port) {
-            if (port.attributes.publish) {
-                psDb.push(port.id);
-            }
-        });
-
-        console.log('psDb = ', psDb);
-
-        var result = [];
-        $.validator.addMethod('checkPorts', function(value, element) {
-        // change in ports' publish state?
-        //    get ports' publish state from database: use psDb
-        //    get new ports' publish state from form
-        //    If element is checked:
-            if ($(element).attr('checked') == 'checked') {
-                result.push('checked');
-                result.push(psDb.indexOf($(element).attr('id')) != -1);
-                console.log($(element).attr('id'));
-                console.log(psDb.indexOf($(element).attr('id')) != -1);
-                return psDb.indexOf($(element).attr('id')) != -1;
-                // return false;
-                //        return True if ID is not in psDb
-                //        else return False
-            } else if ($(element).attr('checked') != 'checked') {
-                result.push('unchecked');
-                result.push(psDb.indexOf($(element).attr('id')) == -1);
-                console.log($(element).attr('id'));
-                console.log(psDb.indexOf($(element).attr('id')) == -1);
-                return psDb.indexOf($(element).attr('id')) == -1;
-                // return false;
-                //        return True if ID is in psDb
-                //        else return False
-            } else {
-                return false;
-            }
-        }, ''
-            // function(params, element) {
-            // return 'Invalid with ' + result;
-            // }
-        );
-
-        $.validator.addMethod("checkPortGroups", function (value, element, options) {
-            console.log('element is ', element);
-            // var val = $(options[0], element.form).filter(function () {
-            //     console.log('JSTHIS is ', $(this));
-            //     console.log('this.attr(checked) is ', $(this).attr('checked'));
-            //     return $(this).attr('checked');
-            // }).attr('checked');
-            var val = element.checked;
-            console.log('VAL is ', val);
-
-            if (val) {
-                console.log('element ID is ', $(element).attr('id'));
-                console.log('port is CHECKED');
-                console.log(psDb.indexOf($(element).attr('id')) != -1);
-                valid = psDb.indexOf($(element).attr('id')) != -1;
-                // return false;
-                //        return True if ID is not in psDb
-                //        else return False
-            } else {
-                console.log('element ID is ', $(element).attr('id'));
-                console.log('port is UNCHECKED');
-                console.log(psDb.indexOf($(element).attr('id')) == -1);
-                valid = psDb.indexOf($(element).attr('id')) == -1;
-                // return false;
-                //        return True if ID is in psDb
-                //        else return False
-            }
-            console.log('VALID is ', valid);
-            return valid;
-        }, '');
-
-        this.ports_form = this.$('#edit-ports-form');
-        var rules_ports = {};
-        this.ports.each(function(port) {
-            rules_ports[port.id] = {
-                require_from_group: [1, '.ports-group'],
-                checkPortGroups: ['.ports-group']
-            };
-        });
-        console.log("rules_ports = ", rules_ports);
-        this.ports_validator = this.ports_form.validate({
-            debug: true,
-            rules: rules_ports,
-            groups: {
-                'ports-group': 'publish[]'
-            },
-            // rules: {
-            //     'publish[]': {
-            //         checkPorts: true,
-            //         required: false
-            //     }
-            // }
-            // messages: messages_ports
-            // messages: {
-            //     'publish[]': 'Was a port modified?'
-            // }
-        });
-
         // Ensure previous page is correct
         if (this.rockon.get('volume_add_support')) {
             this.parent.pages[1] = RockonEditPorts;
@@ -1623,7 +1511,7 @@ RockonEditPorts = RockstorWizardPage.extend({
         // $('input[name^=publish]').map(function(idx, elem) {
         $('.ports-group').map(function(idx, elem) {
             var pstatus = 'unchecked';
-            if ($(elem).attr('checked') == 'checked') {
+            if ($(elem).attr('checked') === 'checked') {
                 pstatus = 'checked';
             }
             return edit_ports[$(elem).attr('id')] = pstatus;
@@ -1640,15 +1528,6 @@ RockonEditPorts = RockstorWizardPage.extend({
             psDb[port.id] = state;
         });
         console.log('psDb = ', psDb);
-
-        // Compare values from form to those in database
-        var differentPublishPorts = function (new_pbPorts, reference) {
-            // If the length of both objects differ, return true
-            // For each key in new_pbPorts:
-            //  - return true if their values differ
-            //  - continue to next key
-            return (JSON.stringify(new_pbPorts) !== JSON.stringify(reference));
-        }
 
         // 2. change in rocknets?
         // Get join-networks data
