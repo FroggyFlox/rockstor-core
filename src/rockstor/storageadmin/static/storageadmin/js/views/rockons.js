@@ -1448,7 +1448,11 @@ RockonEditPorts = RockstorWizardPage.extend({
                 dropdownParent: $('#install-rockon-overlay'),
                 width: '80%',
                 createTag: function (params) {
-                    if (params.term.match(/^[a-zA-Z0-9]+$/g)) {
+                    var excluded = ['host', 'bridge', 'null'];
+                    if (
+                        params.term.match(/^[a-zA-Z0-9]+$/g)
+                        && excluded.indexOf(params.term) === -1
+                    ) {
                         return {
                             id: params.term,
                             text: params.term
