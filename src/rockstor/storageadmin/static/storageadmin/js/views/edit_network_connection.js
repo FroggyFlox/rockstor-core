@@ -84,13 +84,19 @@ NetworkConnectionView = RockstorLayoutView.extend({
             return this.optional(element) || regExp.test(value);
         }, 'The connection name can only contain alphanumeric characters.')
 
+        $.validator.addMethod('isNotExcluded', function(value, element) {
+            var excluded = ['host', 'bridge', 'null'];
+            return this.optional(element) || excluded.indexOf(value) === -1;
+        }, 'This connection name is reserved for system use.')
+
         this.validator = this.$('#new-connection-form').validate({
             onfocusout: false,
             onkeyup: false,
             rules: {
                 name: {
                     required: true,
-                    isAlphanumeric: true
+                    isAlphanumeric: true,
+                    isNotExcluded: true
                 },
                 ipaddr: {
                     required: {
