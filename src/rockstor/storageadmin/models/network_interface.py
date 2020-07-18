@@ -127,6 +127,11 @@ class NetworkConnection(models.Model):
 
     @property
     def user_dnet(self):
+        """
+        Returns True if the docker network is a rocknet (defined by the user).
+        Used by rockons.js to list available rocknets available for connection.
+        :return: Boolean
+        """
         logger.debug('The property method user_dnet has been triggered')
         user_dnet = None
         if self.bridgeconnection_set.count() > 0:

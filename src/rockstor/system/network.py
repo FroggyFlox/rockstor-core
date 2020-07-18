@@ -117,6 +117,12 @@ def get_con_config(con_list):
         return s
 
     def parse_aux_addresses(dtmap):
+        """
+        Parses auxilliary addresses of a docker network and
+        returns a flat list.
+        :param dtmap:
+        :return:
+        """
         aux = dtmap['IPAM']['Config'][0]['AuxiliaryAddresses']
         aux_list = []
         for k, v in aux.items():

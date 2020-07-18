@@ -265,6 +265,13 @@ def labels_ops(container):
 
 
 def dnet_create_connect(rockon):
+    """
+    For a given rockon, apply all containers <-> docker networks connections
+    (container_link or rocknet) if any. If the docker network in question does
+    not yet exist, create it first.
+    :param rockon: RockOn object
+    :return:
+    """
     for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
         logger.debug('The container name is {}'.format(c.name))
         if DContainerLink.objects.filter(destination=c):
@@ -272,7 +279,6 @@ def dnet_create_connect(rockon):
                 logger.debug('The lo.id is {}, lo.name is {}, lo.source_id is {}, and lo.destination_id is {}'.format(
                     lo.id, lo.name, lo.source_id, lo.destination_id))
                 dnet_create(lo.name)
-                # Connect containers
                 logger.debug('Start CONNECTING containers')
                 dnet_connect(lo.destination.name, lo.name)
                 dnet_connect(lo.source.name, lo.name)
@@ -311,7 +317,7 @@ def generic_install(rockon):
         cmd.append(image_name_plus_tag)
         cmd.extend(cargs(c))
         run_command(cmd, log=True)
-    ## Get to networks
+    # Apply all network connections if any
     dnet_create_connect(rockon)
 
 
