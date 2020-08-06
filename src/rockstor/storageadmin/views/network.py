@@ -20,16 +20,29 @@ import json
 from django.db import transaction
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
-from storageadmin.models import (NetworkConnection, NetworkDevice,
-                                 EthernetConnection, TeamConnection,
-                                 BondConnection, BridgeConnection,
-                                 DContainerLink)
+from storageadmin.models import (
+    NetworkConnection,
+    NetworkDevice,
+    EthernetConnection,
+    TeamConnection,
+    BondConnection,
+    BridgeConnection,
+    DContainerLink,
+)
 from smart_manager.models import Service
 from storageadmin.util import handle_exception
-from storageadmin.serializers import (NetworkDeviceSerializer,
-                                      NetworkConnectionSerializer)
-from system.docker import docker_status, probe_running_containers, dnet_create, dnet_connect, dnet_disconnect, \
-    dnet_remove
+from storageadmin.serializers import (
+    NetworkDeviceSerializer,
+    NetworkConnectionSerializer,
+)
+from system.docker import (
+    docker_status,
+    probe_running_containers,
+    dnet_create,
+    dnet_connect,
+    dnet_disconnect,
+    dnet_remove,
+)
 import system.network as sysnet
 import rest_framework_custom as rfc
 
@@ -43,7 +56,7 @@ DEFAULT_MTU = MIN_MTU
 
 
 class NetworkMixin(object):
-    logger.debug('The class NetworkMixin has been initialized')
+    logger.debug("The class NetworkMixin has been initialized")
     # Runners for teams. @todo: support basic defaults + custom configuration.
     # @todo: lacp doesn't seem to be activating
     runners = {
@@ -67,8 +80,8 @@ class NetworkMixin(object):
     @staticmethod
     @transaction.atomic
     def _update_or_create_ctype(co, ctype, config):
-        logger.debug('The function _update_or_create_ctype has been called')
-        if (ctype == '802-3-ethernet'):
+        logger.debug("The function _update_or_create_ctype has been called")
+        if ctype == "802-3-ethernet":
             try:
                 eco = EthernetConnection.objects.get(connection=co)
                 eco.mac = config["mac"]
@@ -93,28 +106,44 @@ class NetworkMixin(object):
                 bco.save()
             except BondConnection.DoesNotExist:
                 BondConnection.objects.create(connection=co, **config)
-        elif ((ctype == 'bridge') and (docker_status())):
+        elif (ctype == "bridge") and (docker_status()):
             try:
                 brco = BridgeConnection.objects.get(connection=co)
-                brco.docker_name = config['docker_name']
-                logger.debug('Views: docker_name is {} from db, {} from config'.format(brco.docker_name, config['docker_name']))
+                brco.docker_name = config["docker_name"]
+                logger.debug(
+                    "Views: docker_name is {} from db, {} from config".format(
+                        brco.docker_name, config["docker_name"]
+                    )
+                )
                 if (not DContainerLink.objects.filter(name=brco.docker_name)) and (
-                    'docker0' not in brco.docker_name):
+                    "docker0" not in brco.docker_name
+                ):
                     # The bridge connection is not the default docker bridge network
                     # and isn't a docker bridge network defined as a container_link
-                    logger.debug('{} is not docker0 and is not in Container_Links'.format(brco.docker_name))
+                    logger.debug(
+                        "{} is not docker0 and is not in Container_Links".format(
+                            brco.docker_name
+                        )
+                    )
                     brco.usercon = True
                 brco.save()
             except BridgeConnection.DoesNotExist:
                 usercon = False
-                docker_name = config['docker_name']
+                docker_name = config["docker_name"]
                 if (not DContainerLink.objects.filter(name=docker_name)) and (
-                    'docker0' not in docker_name):
+                    "docker0" not in docker_name
+                ):
                     # The bridge connection is not the default docker bridge network
                     # and isn't a docker bridge network defined as a container_link
-                    logger.debug('{} is not docker0 and is not in Container_Links'.format(docker_name))
+                    logger.debug(
+                        "{} is not docker0 and is not in Container_Links".format(
+                            docker_name
+                        )
+                    )
                     usercon = True
-                BridgeConnection.objects.create(connection=co, usercon=usercon, **config)
+                BridgeConnection.objects.create(
+                    connection=co, usercon=usercon, **config
+                )
 
         else:
             logger.error("Unknown ctype: {} config: {}".format(ctype, config))
@@ -138,7 +167,7 @@ class NetworkMixin(object):
     @classmethod
     @transaction.atomic
     def _refresh_connections(cls):
-        logger.debug('The function _refresh_connections has been called')
+        logger.debug("The function _refresh_connections has been called")
         cmap = sysnet.get_con_config(sysnet.get_con_list())
         defer_master_updates = []
         for nco in NetworkConnection.objects.all():
@@ -228,16 +257,18 @@ class NetworkDeviceListView(rfc.GenericView, NetworkMixin):
 
 
 class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
-    logger.debug('The class NetworkConnectionListView has been initialized')
+    logger.debug("The class NetworkConnectionListView has been initialized")
     serializer_class = NetworkConnectionSerializer
-    ctypes = ('ethernet', 'team', 'bond', 'docker')
+    ctypes = ("ethernet", "team", "bond", "docker")
 
     # ethtool is the default link watcher.
 
     config_methods = ("auto", "manual")
 
     def get_queryset(self, *args, **kwargs):
-        logger.debug('The method get_queryset of the class NetworkConnectionListView has been called')
+        logger.debug(
+            "The method get_queryset of the class NetworkConnectionListView has been called"
+        )
         with self._handle_exception(self.request):
             self._refresh_connections()
             return NetworkConnection.objects.all()
@@ -259,16 +290,26 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
 
     @transaction.atomic
     def post(self, request):
-        logger.debug('the POST method of NetworkConnectionListView was activated')
+        logger.debug("the POST method of NetworkConnectionListView was activated")
         with self._handle_exception(request):
-            ipaddr = gateway = dns_servers = search_domains = \
-            aux_address = dgateway = host_binding = icc = internal = \
-            ip_masquerade = ip_range = subnet = None
+            ipaddr = (
+                gateway
+            ) = (
+                dns_servers
+            ) = (
+                search_domains
+            ) = (
+                aux_address
+            ) = (
+                dgateway
+            ) = host_binding = icc = internal = ip_masquerade = ip_range = subnet = None
             mtu = DEFAULT_MTU
-            name = request.data.get('name')
-            if (NetworkConnection.objects.filter(name=name).exists()):
-                e_msg = ('Connection name ({}) is already in use. Choose a '
-                         'different name.').format(name)
+            name = request.data.get("name")
+            if NetworkConnection.objects.filter(name=name).exists():
+                e_msg = (
+                    "Connection name ({}) is already in use. Choose a "
+                    "different name."
+                ).format(name)
                 handle_exception(Exception(e_msg), request)
 
             # auto of manual
@@ -281,25 +322,26 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
             if method == "manual":
                 # ipaddr is of the format <IP>/<netmask>. eg:
                 # 192.168.1.2/24. If netmask is not given, it defaults to 32.
-                ipaddr = request.data.get('ipaddr')
-                gateway = request.data.get('gateway', None)
-                dns_servers = request.data.get('dns_servers', None)
-                search_domains = request.data.get('search_domains', None)
-                aux_address = request.data.get('aux_address', None)
-                dgateway = request.data.get('dgateway', None)
-                host_binding = request.data.get('host_binding', None)
-                icc = request.data.get('icc')
-                internal = request.data.get('internal')
-                ip_masquerade = request.data.get('ip_masquerade')
-                ip_range = request.data.get('ip_range', None)
-                mtu = request.data.get('mtu', 1500)
-                subnet = request.data.get('subnet', None)
+                ipaddr = request.data.get("ipaddr")
+                gateway = request.data.get("gateway", None)
+                dns_servers = request.data.get("dns_servers", None)
+                search_domains = request.data.get("search_domains", None)
+                aux_address = request.data.get("aux_address", None)
+                dgateway = request.data.get("dgateway", None)
+                host_binding = request.data.get("host_binding", None)
+                icc = request.data.get("icc")
+                internal = request.data.get("internal")
+                ip_masquerade = request.data.get("ip_masquerade")
+                ip_range = request.data.get("ip_range", None)
+                mtu = request.data.get("mtu", 1500)
+                subnet = request.data.get("subnet", None)
 
             # connection type can be one of ethernet, team, bond, or docker
-            ctype = request.data.get('ctype')
-            if (ctype not in self.ctypes):
-                e_msg = ('Unsupported connection type ({}). Supported ones '
-                         'include: ({}).').format(ctype, self.ctypes)
+            ctype = request.data.get("ctype")
+            if ctype not in self.ctypes:
+                e_msg = (
+                    "Unsupported connection type ({}). Supported ones include: ({})."
+                ).format(ctype, self.ctypes)
                 handle_exception(Exception(e_msg), request)
             devices = request.data.get("devices", None)
             if ctype == "team":
@@ -312,15 +354,22 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                     ).format(team_profile, self.team_profiles)
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
-                sysnet.new_team_connection(name, self.runners[team_profile],
-                                            devices, ipaddr, gateway,
-                                            dns_servers, search_domains)
+                sysnet.new_team_connection(
+                    name,
+                    self.runners[team_profile],
+                    devices,
+                    ipaddr,
+                    gateway,
+                    dns_servers,
+                    search_domains,
+                )
 
             elif ctype == "ethernet":
                 device = request.data.get("device")
                 self._validate_devices([device], request, size=1)
-                sysnet.new_ethernet_connection(name, device, ipaddr, gateway,
-                                                dns_servers, search_domains)
+                sysnet.new_ethernet_connection(
+                    name, device, ipaddr, gateway, dns_servers, search_domains
+                )
 
             elif ctype == "bond":
                 bond_profile = request.data.get("bond_profile")
@@ -331,13 +380,29 @@ class NetworkConnectionListView(rfc.GenericView, NetworkMixin):
                     ).format(bond_profile, self.bond_profiles)
                     handle_exception(Exception(e_msg), request)
                 self._validate_devices(devices, request)
-                sysnet.new_bond_connection(name, bond_profile, devices,
-                                            ipaddr, gateway, dns_servers,
-                                            search_domains)
+                sysnet.new_bond_connection(
+                    name,
+                    bond_profile,
+                    devices,
+                    ipaddr,
+                    gateway,
+                    dns_servers,
+                    search_domains,
+                )
 
-            elif (ctype == 'docker'):
-                dnet_create(name, aux_address, dgateway, host_binding, icc,
-                            internal, ip_masquerade, ip_range, mtu, subnet)
+            elif ctype == "docker":
+                dnet_create(
+                    name,
+                    aux_address,
+                    dgateway,
+                    host_binding,
+                    icc,
+                    internal,
+                    ip_masquerade,
+                    ip_range,
+                    mtu,
+                    subnet,
+                )
 
             return Response()
 
@@ -363,7 +428,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
     @transaction.atomic
     def put(self, request, id):
-        logger.debug('the PUT method of NetworkConnectionDetailView was activated')
+        logger.debug("the PUT method of NetworkConnectionDetailView was activated")
 
         with self._handle_exception(request):
             nco = self._nco(request, id)
@@ -378,32 +443,40 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
                     handle_exception(Exception(e_msg), request)
             except ValueError:
                 handle_exception(Exception(e_msg), request)
-            ipaddr = gateway = dns_servers = search_domains = \
-            aux_address = dgateway = host_binding = icc = internal = \
-            ip_masquerade = ip_range = subnet = None
-            if (method == 'manual'):
-                ipaddr = request.data.get('ipaddr', None)
-                gateway = request.data.get('gateway', None)
-                dns_servers = request.data.get('dns_servers', None)
-                search_domains = request.data.get('search_domains', None)
-                aux_address = request.data.get('aux_address', None)
-                dgateway = request.data.get('dgateway', None)
-                host_binding = request.data.get('host_binding', None)
-                icc = request.data.get('icc')
-                internal = request.data.get('internal')
-                ip_masquerade = request.data.get('ip_masquerade')
-                ip_range = request.data.get('ip_range', None)
-                mtu = request.data.get('mtu', 1500)
-                subnet = request.data.get('subnet', None)
+            ipaddr = (
+                gateway
+            ) = (
+                dns_servers
+            ) = (
+                search_domains
+            ) = (
+                aux_address
+            ) = (
+                dgateway
+            ) = host_binding = icc = internal = ip_masquerade = ip_range = subnet = None
+            if method == "manual":
+                ipaddr = request.data.get("ipaddr", None)
+                gateway = request.data.get("gateway", None)
+                dns_servers = request.data.get("dns_servers", None)
+                search_domains = request.data.get("search_domains", None)
+                aux_address = request.data.get("aux_address", None)
+                dgateway = request.data.get("dgateway", None)
+                host_binding = request.data.get("host_binding", None)
+                icc = request.data.get("icc")
+                internal = request.data.get("internal")
+                ip_masquerade = request.data.get("ip_masquerade")
+                ip_range = request.data.get("ip_range", None)
+                mtu = request.data.get("mtu", 1500)
+                subnet = request.data.get("subnet", None)
 
-            ctype = request.data.get('ctype')
-            if (nco.ctype == 'ethernet'):
+            ctype = request.data.get("ctype")
+            if nco.ctype == "ethernet":
                 device = nco.networkdevice_set.first().name
                 self._delete_connection(nco)
-                sysnet.new_ethernet_connection(nco.name, device, ipaddr,
-                                                gateway, dns_servers,
-                                                search_domains, mtu)
-            elif (nco.ctype == 'team'):
+                sysnet.new_ethernet_connection(
+                    nco.name, device, ipaddr, gateway, dns_servers, search_domains, mtu
+                )
+            elif nco.ctype == "team":
                 team_profile = nco.team_profile
                 devices = []
                 for child_nco in NetworkConnection.objects.filter(master=nco):
@@ -411,59 +484,108 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
                 self._delete_connection(nco)
                 sysnet.new_team_connection(
-                    nco.name, self.runners[team_profile], devices, ipaddr,
-                    gateway, dns_servers, search_domains, mtu)
-            elif (ctype == 'docker'):
-                docker_name = request.data.get('docker_name')
-                dname = request.data.get('dname')
-                logger.debug('The connection is a Docker network named {}, to be renamed to {}'.format(docker_name, dname))
+                    nco.name,
+                    self.runners[team_profile],
+                    devices,
+                    ipaddr,
+                    gateway,
+                    dns_servers,
+                    search_domains,
+                    mtu,
+                )
+            elif ctype == "docker":
+                docker_name = request.data.get("docker_name")
+                dname = request.data.get("dname")
+                logger.debug(
+                    "The connection is a Docker network named {}, to be renamed to {}".format(
+                        docker_name, dname
+                    )
+                )
                 # Get list of connected containers to re-connect them later
                 clist = probe_running_containers(network=docker_name, all=True)[:-1]
-                logger.debug('clist is {}'.format(clist))
-                if (len(clist) > 0):
+                logger.debug("clist is {}".format(clist))
+                if len(clist) > 0:
                     logger.debug(
-                        'The Docker network named {} had {} containers, so reconnect them'.format(docker_name,
-                                                                                                  len(clist)))
+                        "The Docker network named {} had {} containers, so reconnect them".format(
+                            docker_name, len(clist)
+                        )
+                    )
                     for c in clist:
-                        logger.debug('Disconnect {} to the Docker network {}'.format(c, dname))
+                        logger.debug(
+                            "Disconnect {} to the Docker network {}".format(c, dname)
+                        )
                         dnet_disconnect(c, docker_name)
                 # Remove docker network
-                logger.debug('Remove the Docker network named {}'.format(docker_name))
+                logger.debug("Remove the Docker network named {}".format(docker_name))
                 dnet_remove(network=docker_name)
 
                 # Create the Docker network with new settings
                 try:
-                    logger.debug('Create the Docker network named {}'.format(dname))
-                    dnet_create(dname, aux_address, dgateway, host_binding, icc,
-                                internal, ip_masquerade, ip_range, mtu, subnet)
+                    logger.debug("Create the Docker network named {}".format(dname))
+                    dnet_create(
+                        dname,
+                        aux_address,
+                        dgateway,
+                        host_binding,
+                        icc,
+                        internal,
+                        ip_masquerade,
+                        ip_range,
+                        mtu,
+                        subnet,
+                    )
                     # Disconnect and reconnect all containers (if any)
-                    if (len(clist) > 0):
+                    if len(clist) > 0:
                         logger.debug(
-                            'The Docker network named {} had {} containers, so reconnect them'.format(docker_name,
-                                                                                                      len(clist)))
+                            "The Docker network named {} had {} containers, so reconnect them".format(
+                                docker_name, len(clist)
+                            )
+                        )
                         for c in clist:
-                            logger.debug('Connect {} to the Docker network {}'.format(c, dname))
+                            logger.debug(
+                                "Connect {} to the Docker network {}".format(c, dname)
+                            )
                             dnet_connect(c, dname, all=True)
                 except Exception as e:
-                    logger.debug("An error occurred while creating the docker network: {}".format(e))
+                    logger.debug(
+                        "An error occurred while creating the docker network: {}".format(
+                            e
+                        )
+                    )
                     # The creation of the new network has failed, so re-create the old one
-                    dconf = BridgeConnection.objects.filter(docker_name=docker_name).values()[0]
-                    aux_address = dconf['aux_address']
-                    dgateway = dconf['dgateway']
-                    host_binding = dconf['host_binding']
-                    icc = dconf['icc']
-                    internal = dconf['internal']
-                    ip_masquerade = dconf['ip_masquerade']
-                    ip_range = dconf['ip_range']
-                    subnet = dconf['subnet']
-                    dnet_create(docker_name, aux_address, dgateway, host_binding, icc,
-                                internal, ip_masquerade, ip_range, mtu, subnet)
-                    if (len(clist) > 0):
+                    dconf = BridgeConnection.objects.filter(
+                        docker_name=docker_name
+                    ).values()[0]
+                    aux_address = dconf["aux_address"]
+                    dgateway = dconf["dgateway"]
+                    host_binding = dconf["host_binding"]
+                    icc = dconf["icc"]
+                    internal = dconf["internal"]
+                    ip_masquerade = dconf["ip_masquerade"]
+                    ip_range = dconf["ip_range"]
+                    subnet = dconf["subnet"]
+                    dnet_create(
+                        docker_name,
+                        aux_address,
+                        dgateway,
+                        host_binding,
+                        icc,
+                        internal,
+                        ip_masquerade,
+                        ip_range,
+                        mtu,
+                        subnet,
+                    )
+                    if len(clist) > 0:
                         logger.debug(
-                            'The Docker network named {} had {} containers, so reconnect them'.format(docker_name,
-                                                                                                      len(clist)))
+                            "The Docker network named {} had {} containers, so reconnect them".format(
+                                docker_name, len(clist)
+                            )
+                        )
                         for c in clist:
-                            logger.debug('Connect {} to the Docker network {}'.format(c, dname))
+                            logger.debug(
+                                "Connect {} to the Docker network {}".format(c, dname)
+                            )
                             dnet_connect(c, docker_name, all=True)
                     raise e
 
@@ -520,7 +642,7 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
     @staticmethod
     def _delete_connection(nco):
-        logger.debug('the _delete method was called')
+        logger.debug("the _delete method was called")
         for mnco in nco.networkconnection_set.all():
             sysnet.delete_connection(mnco.uuid)
         sysnet.delete_connection(nco.uuid)
@@ -528,36 +650,44 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
 
     @transaction.atomic
     def delete(self, request, id):
-        logger.debug('the delete method was called')
+        logger.debug("the delete method was called")
         with self._handle_exception(request):
             nco = self._nco(request, id)
-            logger.debug('nco.id is {}, and nco.name is {}'.format(nco.id, nco.name))
+            logger.debug("nco.id is {}, and nco.name is {}".format(nco.id, nco.name))
             if nco.bridgeconnection_set.first() > 0:  # If docker network
                 brco = nco.bridgeconnection_set.first()
-                logger.debug('The connection is a Docker network: {}'.format(brco.docker_name))
-                logger.debug('Is it a user-defined Docker?: {}'.format(brco.usercon))
+                logger.debug(
+                    "The connection is a Docker network: {}".format(brco.docker_name)
+                )
+                logger.debug("Is it a user-defined Docker?: {}".format(brco.usercon))
                 # use docker tools to remove network
                 # check for running containers and disconnect them first
                 clist = probe_running_containers(network=brco.docker_name)
                 if len(clist) > 1:
                     for c in clist[:-1]:
-                        logger.debug('Disconnect container {} from {}'.format(c, brco.docker_name))
+                        logger.debug(
+                            "Disconnect container {} from {}".format(
+                                c, brco.docker_name
+                            )
+                        )
                         dnet_disconnect(c, brco.docker_name)
                 dnet_remove(network=brco.docker_name)
             else:
                 restricted = False
                 try:
-                    so = Service.objects.get(name='rockstor')
+                    so = Service.objects.get(name="rockstor")
                     config = json.loads(so.config)
-                    if (config['network_interface'] == nco.name):
+                    if config["network_interface"] == nco.name:
                         restricted = True
                 except Exception as e:
                     logger.exception(e)
-                if (restricted):
-                    e_msg = ('This connection ({}) is designated for '
-                             'management and cannot be deleted. If you really '
-                             'need to delete it, change the Rockstor service '
-                             'configuration and try again.').format(nco.name)
+                if restricted:
+                    e_msg = (
+                        "This connection ({}) is designated for "
+                        "management and cannot be deleted. If you really "
+                        "need to delete it, change the Rockstor service "
+                        "configuration and try again."
+                    ).format(nco.name)
                     handle_exception(Exception(e_msg), request)
                 self._delete_connection(nco)
             return Response()
@@ -570,8 +700,8 @@ class NetworkConnectionDetailView(rfc.GenericView, NetworkMixin):
             if switch == "up" and nco.ctype in ("team", "bond"):
                 # order_by('name') because in some cases member interfaces must
                 # be brought up in order. eg: active-backup.
-                for mnco in nco.networkconnection_set.all().order_by('name'):
-                    logger.debug('upping {} {}'.format(mnco.name, mnco.uuid))
+                for mnco in nco.networkconnection_set.all().order_by("name"):
+                    logger.debug("upping {} {}".format(mnco.name, mnco.uuid))
                     sysnet.toggle_connection(mnco.uuid, switch)
             else:
                 sysnet.toggle_connection(nco.uuid, switch)

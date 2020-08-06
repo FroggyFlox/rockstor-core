@@ -24,21 +24,39 @@ from django.conf import settings
 from django_ztask.decorators import task
 
 from cli.api_wrapper import APIWrapper
-from storageadmin.models import (RockOn, DContainer, DVolume, DPort,
-                                 DCustomConfig, DContainerLink,
-                                 ContainerOption, DContainerEnv,
-                                 DContainerDevice, DContainerArgs,
-                                 DContainerLabel, DContainerNetwork)
+from storageadmin.models import (
+    RockOn,
+    DContainer,
+    DVolume,
+    DPort,
+    DCustomConfig,
+    DContainerLink,
+    ContainerOption,
+    DContainerEnv,
+    DContainerDevice,
+    DContainerArgs,
+    DContainerLabel,
+    DContainerNetwork,
+)
 from system.docker import dnet_create, dnet_connect
 from system.osi import run_command
 from fs.btrfs import mount_share
 from rockon_utils import container_status
 
-DOCKER = '/usr/bin/docker'
-ROCKON_URL = 'https://localhost/api/rockons'
-DCMD = [DOCKER, 'run', ]
-DCMD2 = list(DCMD) + ['-d', '--restart=unless-stopped', ]
-DNET = [DOCKER, 'network', ]
+DOCKER = "/usr/bin/docker"
+ROCKON_URL = "https://localhost/api/rockons"
+DCMD = [
+    DOCKER,
+    "run",
+]
+DCMD2 = list(DCMD) + [
+    "-d",
+    "--restart=unless-stopped",
+]
+DNET = [
+    DOCKER,
+    "network",
+]
 
 logger = logging.getLogger(__name__)
 aw = APIWrapper()
@@ -64,10 +82,10 @@ def rm_container(name):
 
 @task()
 def start(rid):
-    logger.debug('the rockon {} was triggered for start'.format(rid))
+    logger.debug("the rockon {} was triggered for start".format(rid))
     rockon = RockOn.objects.get(id=rid)
-    logger.debug('the rockon is {}'.format(rockon.name))
-    globals().get('%s_start' % rockon.name.lower(), generic_start)(rockon)
+    logger.debug("the rockon is {}".format(rockon.name))
+    globals().get("%s_start" % rockon.name.lower(), generic_start)(rockon)
 
 
 def generic_start(rockon):
@@ -76,7 +94,8 @@ def generic_start(rockon):
         for c in DContainer.objects.filter(rockon=rockon).order_by("launch_order"):
             run_command([DOCKER, "start", c.name], log=True)
     except Exception as e:
-        logger.error(("Exception while starting the rockon ({}).").format(rockon.name))
+        logger.error(('Exception while starting the '
+                     'rockon ({}).').format(rockon.name))
         logger.exception(e)
         new_status = "start_failed"
     finally:
@@ -98,7 +117,8 @@ def generic_stop(rockon):
         for c in DContainer.objects.filter(rockon=rockon).order_by("-launch_order"):
             run_command([DOCKER, "stop", c.name], log=True)
     except Exception as e:
-        logger.debug(("Exception while stopping the rockon ({}).").format(rockon.name))
+        logger.debug(('Exception while stopping the '
+                     'rockon ({}).').format(rockon.name))
         logger.exception(e)
         new_status = "stop_failed"
     finally:
@@ -119,28 +139,35 @@ def update(rid, live=False):
     :param live:
     :return:
     """
-    logger.debug('LIVE-update is set as {}'.format(live))
+    logger.debug("LIVE-update is set as {}".format(live))
     if live:
-        logger.debug('A live-update will be attempted.')
-        new_state = 'installed'
+        logger.debug("A live-update will be attempted.")
+        new_state = "installed"
         try:
             rockon = RockOn.objects.get(id=rid)
-            logger.debug('rid is {} and rockon is {}'.format(rid, rockon))
+            logger.debug("rid is {} and rockon is {}".format(rid, rockon))
             # Ensure the rock-on is running before attempting network connection
             start(rid)
             dnet_create_connect(rockon)
         except Exception as e:
-            logger.debug('Exception while live-updating the rock-on ({})'.format(rockon))
+            logger.debug(
+                "Exception while live-updating the rock-on ({})".format(rockon)
+            )
             logger.exception(e)
-            new_state = 'install_failed'
+            new_state = "install_failed"
         finally:
-            url = ('rockons/{}/state_update'.format(rid))
-            logger.debug('Update rockon ({}) STATE to: {} ({})'.format(rockon.name, new_state, url))
-            return aw.api_call(url, data={'new_state': new_state, },
-                               calltype='post', save_error=False)
+            url = "rockons/{}/state_update".format(rid)
+            logger.debug(
+                "Update rockon ({}) STATE to: {} ({})".format(
+                    rockon.name, new_state, url
+                )
+            )
+            return aw.api_call(
+                url, data={"new_state": new_state,}, calltype="post", save_error=False
+            )
     else:
-        logger.debug('NORMAL-update of the rockon as {}'.format(live))
-        uninstall(rid, new_state='pending_update')
+        logger.debug("NORMAL-update of the rockon as {}".format(live))
+        uninstall(rid, new_state="pending_update")
         install(rid)
 
 
@@ -195,19 +222,27 @@ def container_ops(container):
 def port_ops(container):
     ops_list = []
     for po in DPort.objects.filter(container=container):
-        logger.debug('Test if port {} ({}) should be published'.format(po.id, po.description))
+        logger.debug(
+            "Test if port {} ({}) should be published".format(po.id, po.description)
+        )
         # Skip the port if no set to be published
-        if (po.publish is not True):
-            logger.debug('The port {} ({}) should not be published ({}), so skip it!'. format(po.id, po.description, po.publish))
+        if po.publish is not True:
+            logger.debug(
+                "The port {} ({}) should not be published ({}), so skip it!".format(
+                    po.id, po.description, po.publish
+                )
+            )
             continue
-        pstr = '{}:{}'.format(po.hostp, po.containerp)
-        if (po.protocol is not None):
-            pstr = '{}/{}'.format(pstr, po.protocol)
-            ops_list.extend(['-p', pstr])
+        pstr = "{}:{}".format(po.hostp, po.containerp)
+        if po.protocol is not None:
+            pstr = "{}/{}".format(pstr, po.protocol)
+            ops_list.extend(["-p", pstr])
         else:
-            tcp = '{}/tcp'.format(pstr)
-            udp = '{}/udp'.format(pstr)
-            ops_list.extend(['-p', tcp, '-p', udp, ])
+            tcp = "{}/tcp".format(pstr)
+            udp = "{}/udp".format(pstr)
+            ops_list.extend(
+                ["-p", tcp, "-p", udp,]
+            )
     return ops_list
 
 
@@ -260,7 +295,7 @@ def labels_ops(container):
     labels_list = []
     for l in DContainerLabel.objects.filter(container=container):
         if len(l.val.strip()) > 0:
-            labels_list.extend(['--label', '%s' % (l.val)])
+            labels_list.extend(["--label", "%s" % (l.val)])
     return labels_list
 
 
@@ -272,26 +307,31 @@ def dnet_create_connect(rockon):
     :param rockon: RockOn object
     :return:
     """
-    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
-        logger.debug('The container name is {}'.format(c.name))
+    for c in DContainer.objects.filter(rockon=rockon).order_by("launch_order"):
+        logger.debug("The container name is {}".format(c.name))
         if DContainerLink.objects.filter(destination=c):
             for lo in DContainerLink.objects.filter(destination=c):
-                logger.debug('The lo.id is {}, lo.name is {}, lo.source_id is {}, and lo.destination_id is {}'.format(
-                    lo.id, lo.name, lo.source_id, lo.destination_id))
+                logger.debug(
+                    "The lo.id is {}, lo.name is {}, lo.source_id is {}, and lo.destination_id is {}".format(
+                        lo.id, lo.name, lo.source_id, lo.destination_id
+                    )
+                )
                 dnet_create(lo.name)
-                logger.debug('Start CONNECTING containers')
+                logger.debug("Start CONNECTING containers")
                 dnet_connect(lo.destination.name, lo.name)
                 dnet_connect(lo.source.name, lo.name)
         if DContainerNetwork.objects.filter(container=c):
-            logger.debug('Create and Connect container {}'.format(c.name))
+            logger.debug("Create and Connect container {}".format(c.name))
             for cno in DContainerNetwork.objects.filter(container=c):
                 dnet_create(cno.connection.docker_name)
-                dnet_connect(container=cno.container.name, network=cno.connection.docker_name)
+                dnet_connect(
+                    container=cno.container.name, network=cno.connection.docker_name
+                )
     # @todo: add detection of (or wait for) finished installed before creating networks?
 
 
 def generic_install(rockon):
-    for c in DContainer.objects.filter(rockon=rockon).order_by('launch_order'):
+    for c in DContainer.objects.filter(rockon=rockon).order_by("launch_order"):
         rm_container(c.name)
         # pull image explicitly so we get updates on re-installs.
         image_name_plus_tag = c.dimage.name + ":" + c.dimage.tag

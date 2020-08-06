@@ -47,6 +47,7 @@ from rockon_helpers import rockon_status
 from system.docker import docker_status
 from django_ztask.models import Task
 from django.conf import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -408,14 +409,16 @@ class RockOnView(rfc.GenericView):
                 clo.name = cl_d["name"]
                 clo.save()
             for no in DContainerLink.objects.filter(name=clo.name):
-                logger.debug('net.object no.id is: {}'.format(no.id))
-                logger.debug('net.object no.name is: {}'.format(no.name))
-                logger.debug('net.object no.source is: {}'.format(no.source_id))
-                logger.debug('net.object no.destination is: {}'.format(no.destination_id))
+                logger.debug("net.object no.id is: {}".format(no.id))
+                logger.debug("net.object no.name is: {}".format(no.name))
+                logger.debug("net.object no.source is: {}".format(no.source_id))
+                logger.debug(
+                    "net.object no.destination is: {}".format(no.destination_id)
+                )
                 # Get corresponding names
-                logger.debug('source name is: {}'.format(no.source.name))
-                logger.debug('destination name is: {}'.format(no.destination.name))
-                logger.debug('network name is: {}'.format(no.name))
+                logger.debug("source name is: {}".format(no.source.name))
+                logger.debug("destination name is: {}".format(no.destination.name))
+                logger.debug("network name is: {}".format(no.name))
         self._update_cc(ro, r_d)
 
     def _sorted_keys(self, cd):
@@ -492,7 +495,9 @@ class RockOnView(rfc.GenericView):
 
         url_root = settings.ROCKONS.get("remote_metastore")
         remote_root = "%s/%s" % (url_root, settings.ROCKONS.get("remote_root"))
-        msg = ("Error while processing remote metastore at ({}).").format(remote_root)
+        msg = ("Error while processing remote metastore at ({}).").format(
+            remote_root
+        )
         with self._handle_exception(self.request, msg=msg):
             response = requests.get(remote_root, timeout=10)
             if response.status_code != 200:

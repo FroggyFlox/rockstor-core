@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 from django.db import models
-from storageadmin.models import (Share, BridgeConnection)
+from storageadmin.models import Share, BridgeConnection
 import logging
 
 from system.docker import probe_running_containers
@@ -57,11 +57,11 @@ class RockOn(models.Model):
         not to disable a rock-on's UI button.
         :return:
         """
-        if (not self.ui):
+        if not self.ui:
             return None
         for co in self.dcontainer_set.all():
             for po in co.dport_set.all():
-                if (po.uiport and po.publish):
+                if po.uiport and po.publish:
                     return True
         return None
 
@@ -73,11 +73,7 @@ class RockOn(models.Model):
         :return: True if using host networking.
         """
         for co in self.dcontainer_set.all():
-            res = probe_running_containers(
-                container=co.name,
-                network="host",
-                all=True
-            )
+            res = probe_running_containers(container=co.name, network="host", all=True)
             if len(res) > 1:
                 return True
             else:
@@ -116,8 +112,8 @@ class DContainerLink(models.Model):
     name = models.CharField(max_length=64, null=True)
 
     class Meta:
-        unique_together = ('source', 'destination', 'name')
-        app_label = 'storageadmin'
+        unique_together = ("source", "destination", "name")
+        app_label = "storageadmin"
 
 
 class DContainerNetwork(models.Model):
@@ -126,19 +122,19 @@ class DContainerNetwork(models.Model):
 
     @property
     def docker_name(self):
-        if (self.connection is not None):
+        if self.connection is not None:
             return self.connection.docker_name
         return None
 
     @property
     def container_name(self):
-        if (self.container is not None):
+        if self.container is not None:
             return self.container.name
         return None
 
     class Meta:
-        unique_together = ('container', 'connection')
-        app_label = 'storageadmin'
+        unique_together = ("container", "connection")
+        app_label = "storageadmin"
 
 
 class DPort(models.Model):
@@ -154,10 +150,9 @@ class DPort(models.Model):
 
     @property
     def container_name(self):
-        if (self.container is not None):
+        if self.container is not None:
             return self.container.name
         return None
-
 
     class Meta:
         unique_together = (

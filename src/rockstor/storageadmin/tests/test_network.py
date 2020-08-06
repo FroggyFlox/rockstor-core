@@ -156,12 +156,13 @@ class NetworkTests(APITestMixin, APITestCase):
         """
         # get base URL
         response = self.client.get("{}/connections".format(self.BASE_URL))
-        self.assertEqual(response.status_code,
-                         status.HTTP_200_OK,
-                         msg="Un-expected get() result:\n"
-                             "response.status_code = ({}).\n "
-                             "response.data = ({}).\n ".format(response.status_code, response.data))
-
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            msg="Un-expected get() result:\n"
+            "response.status_code = ({}).\n "
+            "response.data = ({}).\n ".format(response.status_code, response.data),
+        )
 
         # response = self.client.get('{}/connections/17'.format(self.BASE_URL))
         # # response = self.client.get('/api/network/connections/1')
@@ -172,7 +173,6 @@ class NetworkTests(APITestMixin, APITestCase):
         #                      "response.data = ({}).\n ".format(response.status_code, response.data)
         # )
 
-
     def test_put_invalid_id(self):
         """
         test with invalid connection id
@@ -180,11 +180,17 @@ class NetworkTests(APITestMixin, APITestCase):
         """
         data = {"id": 99}
         response = self.client.put("{}/connections/99".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR, msg=response.data)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg=response.data,
+        )
         e_msg = "Network connection (99) does not exist."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
-
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
     @mock.patch("storageadmin.views.network.NetworkConnectionDetailView._nco")
     def test_put(self, mock_nco):
@@ -252,20 +258,31 @@ class NetworkTests(APITestMixin, APITestCase):
         # Invalid MTU
         data = {"id": 17, "mtu": 10000}
         response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.status_code returned was {}".format(response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.status_code returned was {}".format(response.status_code),
+        )
         e_msg = "The mtu must be an integer in 1500 - 9000 range."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         data = {"id": 17, "mtu": 100}
         response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.status_code returned was {}".format(response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.status_code returned was {}".format(response.status_code),
+        )
         e_msg = "The mtu must be an integer in 1500 - 9000 range."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
-
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
     @mock.patch("storageadmin.views.network.NetworkConnectionDetailView._nco")
     def test_delete(self, mock_nco):
@@ -276,10 +293,12 @@ class NetworkTests(APITestMixin, APITestCase):
 
         data = {"id": 17}
         response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK,
-                         msg="response.data = {}\n"
-                         "reponse.status_code = {}".format(response.data, response.status_code))
-
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+            msg="response.data = {}\n"
+            "reponse.status_code = {}".format(response.data, response.status_code),
+        )
 
     @mock.patch("storageadmin.views.network.NetworkConnection.objects")
     def test_nclistview_post_invalid(self, mock_networkconnection):
@@ -293,12 +312,18 @@ class NetworkTests(APITestMixin, APITestCase):
 
         data = {"id": 17, "name": "br-6088a34098e0"}
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "Connection name (br-6088a34098e0) is already in use. Choose a different name."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         # No method is defined
         mock_networkconnection.filter.return_value = mock_networkconnection
@@ -306,54 +331,92 @@ class NetworkTests(APITestMixin, APITestCase):
 
         data = {"id": 17, "name": "br-6088a34098e0"}
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "Unsupported config method (None). Supported ones include: (('auto', 'manual'))."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         # Invalid connection type
         mock_networkconnection.filter.return_value = mock_networkconnection
         mock_networkconnection.exists.return_value = False
 
-        data = {"id": 17, "name": "br-6088a34098e0",
-                "method": "auto", "ctype": "invalid_ctype"}
+        data = {
+            "id": 17,
+            "name": "br-6088a34098e0",
+            "method": "auto",
+            "ctype": "invalid_ctype",
+        }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "Unsupported connection type (invalid_ctype). Supported ones include: (('ethernet', 'team', 'bond', 'docker'))."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         # Invalid team profile
         mock_networkconnection.filter.return_value = mock_networkconnection
         mock_networkconnection.exists.return_value = False
 
-        data = {"id": 17, "name": "br-6088a34098e0",
-                "method": "auto", "ctype": "team", "team_profile": "invalid_profile"}
+        data = {
+            "id": 17,
+            "name": "br-6088a34098e0",
+            "method": "auto",
+            "ctype": "team",
+            "team_profile": "invalid_profile",
+        }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "Unsupported team profile (invalid_profile). Supported ones include: (('broadcast', 'roundrobin', 'activebackup', 'loadbalance', 'lacp'))."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         # Invalid bond profile
         mock_networkconnection.filter.return_value = mock_networkconnection
         mock_networkconnection.exists.return_value = False
 
-        data = {"id": 17, "name": "br-6088a34098e0",
-                "method": "auto", "ctype": "bond", "bond_profile": "invalid_profile"}
+        data = {
+            "id": 17,
+            "name": "br-6088a34098e0",
+            "method": "auto",
+            "ctype": "bond",
+            "bond_profile": "invalid_profile",
+        }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "Unsupported bond profile (invalid_profile). Supported ones include: (('balance-rr', 'active-backup', 'balance-xor', 'broadcast', '802.3ad', 'balance-tlb', 'balance-alb'))."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
     # TODO: write test for NetworkConnectionListView._validate_devices
 
@@ -369,18 +432,26 @@ class NetworkTests(APITestMixin, APITestCase):
         # mock_networkdevice.get.return_value = self.temp_device
 
         # Unknown device for ethernet connection
-        data = {"id": 99,
-                "name": "Wired connection 99",
-                "device": "eth0",
-                "method": "auto",
-                "ctype": "ethernet"}
+        data = {
+            "id": 99,
+            "name": "Wired connection 99",
+            "device": "eth0",
+            "method": "auto",
+            "ctype": "ethernet",
+        }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "Unknown network device (eth0)."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         # Devices not a list for team connection
         # response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
@@ -391,76 +462,100 @@ class NetworkTests(APITestMixin, APITestCase):
         # self.assertEqual(response.data[0], e_msg,
         #                  msg="response.data[0] = {}".format(response.data[0]))
 
-
     @mock.patch("storageadmin.views.network.NetworkDevice.objects")
     def test_nclistview_post_devices_not_list(self, mock_networkdevice):
 
         mock_networkdevice.get.return_value = self.temp_device_eth0
         ## Team
         # Devices not a list for team connection
-        data = {"id": 99,
-                "name": "Wired connection 99",
-                "devices": "eth0",
-                "method": "auto",
-                "ctype": "team",
-                "team_profile": "broadcast"
-                }
+        data = {
+            "id": 99,
+            "name": "Wired connection 99",
+            "devices": "eth0",
+            "method": "auto",
+            "ctype": "team",
+            "team_profile": "broadcast",
+        }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "devices must be a list"
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         # Not enough devices for team connection
-        data = {"id": 99,
-                "name": "Wired connection 99",
-                "devices": ["eth0", ],
-                "method": "auto",
-                "ctype": "team",
-                "team_profile": "broadcast"
-                }
+        data = {
+            "id": 99,
+            "name": "Wired connection 99",
+            "devices": ["eth0",],
+            "method": "auto",
+            "ctype": "team",
+            "team_profile": "broadcast",
+        }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "A minimum of 2 devices are required."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         ## Bond
         # Devices not a list for team connection
-        data = {"id": 99,
-                "name": "Wired connection 99",
-                "devices": "eth0",
-                "method": "auto",
-                "ctype": "bond",
-                "bond_profile": "balance-rr"
-                }
+        data = {
+            "id": 99,
+            "name": "Wired connection 99",
+            "devices": "eth0",
+            "method": "auto",
+            "ctype": "bond",
+            "bond_profile": "balance-rr",
+        }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "devices must be a list"
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )
 
         # Not enough devices for team connection
-        data = {"id": 99,
-                "name": "Wired connection 99",
-                "devices": ["eth0", ],
-                "method": "auto",
-                "ctype": "bond",
-                "bond_profile": "balance-rr"
-                }
+        data = {
+            "id": 99,
+            "name": "Wired connection 99",
+            "devices": ["eth0",],
+            "method": "auto",
+            "ctype": "bond",
+            "bond_profile": "balance-rr",
+        }
         response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-                         msg="response.data = {}\n"
-                         "response.status_code = {}".format(response.data, response.status_code))
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            msg="response.data = {}\n"
+            "response.status_code = {}".format(response.data, response.status_code),
+        )
         e_msg = "A minimum of 2 devices are required."
-        self.assertEqual(response.data[0], e_msg,
-                         msg="response.data[0] = {}".format(response.data[0]))
-
-
-
+        self.assertEqual(
+            response.data[0],
+            e_msg,
+            msg="response.data[0] = {}".format(response.data[0]),
+        )

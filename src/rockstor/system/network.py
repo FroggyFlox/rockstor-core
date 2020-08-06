@@ -123,10 +123,10 @@ def get_con_config(con_list):
         :param dtmap:
         :return:
         """
-        aux = dtmap['IPAM']['Config'][0]['AuxiliaryAddresses']
+        aux = dtmap["IPAM"]["Config"][0]["AuxiliaryAddresses"]
         aux_list = []
         for k, v in aux.items():
-            aux_list.append('{}={}'.format(k, v))
+            aux_list.append("{}={}".format(k, v))
         return flatten(aux_list)
 
     for uuid in con_list:
@@ -187,58 +187,76 @@ def get_con_config(con_list):
                         "cloned_mac": None,
                         "mtu": None,
                     }
-                elif (tmap['ctype'] in ('team', 'bond')):
-                    tmap[tmap['ctype']] = {
-                        'config': None
-                    }
-                elif (tmap['ctype'] == 'bridge'):
+                elif tmap["ctype"] in ("team", "bond"):
+                    tmap[tmap["ctype"]] = {"config": None}
+                elif tmap["ctype"] == "bridge":
                     # cid, _, _ = run_command([NMCLI, '-g', 'connection.id', 'c', 'show', uuid, ])
-                    cid = tmap['name']
-                    tmap[tmap['ctype']] = {
-                        'docker_name': None,
-                        'aux_address': None,
-                        'dgateway': None,
-                        'host_binding': None,
-                        'icc': False,
-                        'internal': False,
-                        'ip_masquerade': False,
-                        'ip_range': None,
-                        'subnet': None,
+                    cid = tmap["name"]
+                    tmap[tmap["ctype"]] = {
+                        "docker_name": None,
+                        "aux_address": None,
+                        "dgateway": None,
+                        "host_binding": None,
+                        "icc": False,
+                        "internal": False,
+                        "ip_masquerade": False,
+                        "ip_range": None,
+                        "subnet": None,
                     }
                     # Get docker_name
-                    if (docker_status()):
+                    if docker_status():
                         # if (cid[0].startswith('br-')):  # custom-type docker network
-                        if (cid.startswith('br-')):  # custom-type docker network
-                            logger.debug('dnets(cid[3:])[0] is = {}'.format(dnets(cid[3:])[0]))
+                        if cid.startswith("br-"):  # custom-type docker network
+                            logger.debug(
+                                "dnets(cid[3:])[0] is = {}".format(dnets(cid[3:])[0])
+                            )
                             docker_name = dname = dnets(cid[3:])[0]
                         else:  # default docker0 bridge network
                             docker_name = cid
-                            logger.debug('dnets docker_name is = {}'.format(docker_name))
-                            dname = 'bridge'
+                            logger.debug(
+                                "dnets docker_name is = {}".format(docker_name)
+                            )
+                            dname = "bridge"
                         # Fill custom information, if any.
                         dtmap = dnet_inspect(dname)
-                        tmap[tmap['ctype']]['docker_name'] = docker_name
-                        if (dtmap['IPAM']['Config'][0].get('AuxiliaryAddresses')):
-                            tmap[tmap['ctype']]['aux_address'] = parse_aux_addresses(dtmap)
+                        tmap[tmap["ctype"]]["docker_name"] = docker_name
+                        if dtmap["IPAM"]["Config"][0].get("AuxiliaryAddresses"):
+                            tmap[tmap["ctype"]]["aux_address"] = parse_aux_addresses(
+                                dtmap
+                            )
                             # tmap[tmap['ctype']]['aux_address'] = dtmap['IPAM']['Config'][0]['AuxiliaryAddresses']
                         # In some case, DNET inspect does NOT return Gateway in Docker version 18.09.5, build e8ff056
                         # This is likely related to the following bug in which the 'Gateway' is not reported the first
                         # time the docker daemon is started. Upon reload of docker daemon, it IS correctly reported.
                         # https://github.com/moby/moby/issues/26799
-                        if (dtmap['IPAM']['Config'][0].get('Gateway')):
-                            tmap[tmap['ctype']]['dgateway'] = dtmap['IPAM']['Config'][0]['Gateway']
-                        if (dtmap['Options'].get('com.docker.network.bridge.host_binding_ipv4')):
-                            tmap[tmap['ctype']]['host_binding'] = dtmap['Options'][
-                                'com.docker.network.bridge.host_binding_ipv4']
-                        if (dtmap['Options'].get('com.docker.network.bridge.enable_icc')):
-                            tmap[tmap['ctype']]['icc'] = dtmap['Options']['com.docker.network.bridge.enable_icc']
-                        tmap[tmap['ctype']]['internal'] = dtmap['Internal']
-                        if (dtmap['Options'].get('com.docker.network.bridge.ip_masquerade')):
-                            tmap[tmap['ctype']]['ip_masquerade'] = dtmap['Options'][
-                                'com.docker.network.bridge.ip_masquerade']
-                        if (dtmap['IPAM']['Config'][0].get('IPRange')):
-                            tmap[tmap['ctype']]['ip_range'] = dtmap['IPAM']['Config'][0]['IPRange']
-                        tmap[tmap['ctype']]['subnet'] = dtmap['IPAM']['Config'][0]['Subnet']
+                        if dtmap["IPAM"]["Config"][0].get("Gateway"):
+                            tmap[tmap["ctype"]]["dgateway"] = dtmap["IPAM"]["Config"][
+                                0
+                            ]["Gateway"]
+                        if dtmap["Options"].get(
+                            "com.docker.network.bridge.host_binding_ipv4"
+                        ):
+                            tmap[tmap["ctype"]]["host_binding"] = dtmap["Options"][
+                                "com.docker.network.bridge.host_binding_ipv4"
+                            ]
+                        if dtmap["Options"].get("com.docker.network.bridge.enable_icc"):
+                            tmap[tmap["ctype"]]["icc"] = dtmap["Options"][
+                                "com.docker.network.bridge.enable_icc"
+                            ]
+                        tmap[tmap["ctype"]]["internal"] = dtmap["Internal"]
+                        if dtmap["Options"].get(
+                            "com.docker.network.bridge.ip_masquerade"
+                        ):
+                            tmap[tmap["ctype"]]["ip_masquerade"] = dtmap["Options"][
+                                "com.docker.network.bridge.ip_masquerade"
+                            ]
+                        if dtmap["IPAM"]["Config"][0].get("IPRange"):
+                            tmap[tmap["ctype"]]["ip_range"] = dtmap["IPAM"]["Config"][
+                                0
+                            ]["IPRange"]
+                        tmap[tmap["ctype"]]["subnet"] = dtmap["IPAM"]["Config"][0][
+                            "Subnet"
+                        ]
                 else:
                     tmap[tmap["ctype"]] = {}
 

@@ -23,15 +23,19 @@ import logging
 from system.osi import run_command
 from system.services import service_status
 
-Image = collections.namedtuple("Image", "repository tag image_id created " "virt_size")
+Image = collections.namedtuple("Image", "repository tag image_id created virt_size")
 Container = collections.namedtuple(
-    "Container", "container_id image command " "created status ports name"
+    "Container", "container_id image command created status ports name"
 )
 
 DOCKER = "/usr/bin/docker"
-DNET = [DOCKER, "network", ]
+DNET = [
+    DOCKER,
+    "network",
+]
 
 logger = logging.getLogger(__name__)
+
 
 def image_list():
     """
@@ -126,28 +130,48 @@ def probe_running_containers(container=None, network=None, all=False):
     :param all:
     :return:
     """
-    cmd = [DOCKER, 'ps', '--format', '{{.Names}}', ]
-    running_filters = ['--filter', 'status=created',
-                       '--filter', 'status=restarting',
-                       '--filter', 'status=running',
-                       '--filter', 'status=paused', ]
+    cmd = [
+        DOCKER,
+        "ps",
+        "--format",
+        "{{.Names}}",
+    ]
+    running_filters = [
+        "--filter",
+        "status=created",
+        "--filter",
+        "status=restarting",
+        "--filter",
+        "status=running",
+        "--filter",
+        "status=paused",
+    ]
     if all:
-        cmd.extend((['-a', ]))
+        cmd.extend((["-a",]))
     if network:
-        cmd.extend((['--filter', 'network={}'.format(network), ]))
+        cmd.extend((["--filter", "network={}".format(network),]))
     if container:
         # if all:
         #     cmd.extend((['-a', ]))
-        cmd.extend((running_filters + ['--filter', 'name={}'.format(container), ]))
+        cmd.extend((running_filters + ["--filter", "name={}".format(container),]))
     else:
         cmd.extend((running_filters))
     o, e, rc = run_command(cmd)
     return o
 
 
-def dnet_create(network, aux_address=None, dgateway=None, host_binding=None,
-                icc=None, internal=None, ip_masquerade=None, ip_range=None,
-                mtu=1500, subnet=None):
+def dnet_create(
+    network,
+    aux_address=None,
+    dgateway=None,
+    host_binding=None,
+    icc=None,
+    internal=None,
+    ip_masquerade=None,
+    ip_range=None,
+    mtu=1500,
+    subnet=None,
+):
     """
     This method checks for an already existing docker network with the same name.
     If none is found, it will be created using the different parameters given.
@@ -164,34 +188,65 @@ def dnet_create(network, aux_address=None, dgateway=None, host_binding=None,
     :param subnet:
     :return:
     """
-    o, e, rc = run_command(list(DNET) + ['list', '--format', '{{.Name}}', ])
-    if (network not in o):
-        logger.debug('the network {} was NOT detected, so create it now.'.format(network))
-        cmd = list(DNET) + ['create', ]
-        if (subnet is not None and len(subnet.strip()) > 0):
-            cmd.extend(['--subnet={}'.format(subnet), ])
-        if (dgateway is not None and len(dgateway.strip()) > 0):
-            cmd.extend(['--gateway={}'.format(dgateway), ])
-        if (aux_address is not None and len(aux_address.strip()) > 0):
-            for i in aux_address.split(','):
-                cmd.extend(['--aux-address="{}"'.format(i.strip()), ])
-        if (host_binding is not None and len(host_binding.strip()) > 0):
-            cmd.extend(['--opt', 'com.docker.network.bridge.host_binding_ipv4={}'.format(host_binding), ])
-        if (icc is True):
-            cmd.extend(['--opt', 'com.docker.network.bridge.enable_icc=true', ])
-        if (internal is True):
-            cmd.extend(['--internal', ])
-        if (ip_masquerade is True):
-            cmd.extend(['--opt', 'com.docker.network.bridge.enable_ip_masquerade=true', ])
-        if (ip_range is not None and len(ip_range.strip()) > 0):
-            cmd.extend(['--ip-range={}'.format(ip_range), ])
-        if (mtu != 1500):
-            cmd.extend(['--opt', 'com.docker.network.driver.mtu={}'.format(mtu), ])
-        cmd.extend([network, ])
+    o, e, rc = run_command(list(DNET) + ["list", "--format", "{{.Name}}",])
+    if network not in o:
+        logger.debug(
+            "the network {} was NOT detected, so create it now.".format(network)
+        )
+        cmd = list(DNET) + [
+            "create",
+        ]
+        if subnet is not None and len(subnet.strip()) > 0:
+            cmd.extend(
+                ["--subnet={}".format(subnet),]
+            )
+        if dgateway is not None and len(dgateway.strip()) > 0:
+            cmd.extend(
+                ["--gateway={}".format(dgateway),]
+            )
+        if aux_address is not None and len(aux_address.strip()) > 0:
+            for i in aux_address.split(","):
+                cmd.extend(
+                    ['--aux-address="{}"'.format(i.strip()),]
+                )
+        if host_binding is not None and len(host_binding.strip()) > 0:
+            cmd.extend(
+                [
+                    "--opt",
+                    "com.docker.network.bridge.host_binding_ipv4={}".format(
+                        host_binding
+                    ),
+                ]
+            )
+        if icc is True:
+            cmd.extend(
+                ["--opt", "com.docker.network.bridge.enable_icc=true",]
+            )
+        if internal is True:
+            cmd.extend(
+                ["--internal",]
+            )
+        if ip_masquerade is True:
+            cmd.extend(
+                ["--opt", "com.docker.network.bridge.enable_ip_masquerade=true",]
+            )
+        if ip_range is not None and len(ip_range.strip()) > 0:
+            cmd.extend(
+                ["--ip-range={}".format(ip_range),]
+            )
+        if mtu != 1500:
+            cmd.extend(
+                ["--opt", "com.docker.network.driver.mtu={}".format(mtu),]
+            )
+        cmd.extend(
+            [network,]
+        )
         run_command(cmd, log=True)
         # run_command(list(DNET) + ['create', network, ])
     else:
-        logger.debug('the network {} was detected, so do NOT create it.'.format(network))
+        logger.debug(
+            "the network {} was detected, so do NOT create it.".format(network)
+        )
 
 
 def dnet_connect(container, network, all=False):
@@ -203,19 +258,23 @@ def dnet_connect(container, network, all=False):
     :param all:
     :return:
     """
-    if (container in probe_running_containers(container=container, all=all)):
+    if container in probe_running_containers(container=container, all=all):
         logger.debug(
-            'The container ({}) is not absent so connect it to the network {}'.format(
-                container, network))
-        if (container not in probe_running_containers(network=network, all=all)):
+            "The container ({}) is not absent so connect it to the network {}".format(
+                container, network
+            )
+        )
+        if container not in probe_running_containers(network=network, all=all):
             logger.debug(
-                'The container ({}) is not already connected to the network {}'.format(
-                    container, network))
-            run_command(list(DNET) + ['connect', network, container, ], log=True)
+                "The container ({}) is not already connected to the network {}".format(
+                    container, network
+                )
+            )
+            run_command(list(DNET) + ["connect", network, container,], log=True)
 
 
 def dnet_disconnect(container, network):
-    run_command(list(DNET) + ['disconnect', network, container, ], log=True)
+    run_command(list(DNET) + ["disconnect", network, container,], log=True)
 
 
 def dnet_remove(network=None):
@@ -228,5 +287,5 @@ def dnet_remove(network=None):
     """
     # First, verify the network still exists
     if network in dnets():
-        logger.debug('the network {} WAS detected, so delete it now.'.format(network))
-        run_command(list(DNET) + ['rm', network, ], log=True)
+        logger.debug("the network {} WAS detected, so delete it now.".format(network))
+        run_command(list(DNET) + ["rm", network,], log=True)

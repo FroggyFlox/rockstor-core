@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-from storageadmin.models import (RockOn, DContainer, DContainerNetwork)
+from storageadmin.models import RockOn, DContainer, DContainerNetwork
 from storageadmin.serializers import RockOnNetworkSerializer
 import rest_framework_custom as rfc
 from storageadmin.util import handle_exception
@@ -27,11 +27,10 @@ class RockOnNetworkView(rfc.GenericView):
 
     def get_queryset(self, *args, **kwargs):
         try:
-            rockon = RockOn.objects.get(id=self.kwargs['rid'])
+            rockon = RockOn.objects.get(id=self.kwargs["rid"])
         except:
-            e_msg = 'Rock-on ({}) does not exist.'.format(self.kwargs['rid'])
+            e_msg = "Rock-on ({}) does not exist.".format(self.kwargs["rid"])
             handle_exception(Exception(e_msg), self.request)
 
         containers = DContainer.objects.filter(rockon=rockon)
-        return DContainerNetwork.objects.filter(
-            container__in=containers).order_by('id')
+        return DContainerNetwork.objects.filter(container__in=containers).order_by("id")

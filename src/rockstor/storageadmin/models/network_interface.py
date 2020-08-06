@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import json
 from django.db import models
 import logging
+
 logger = logging.getLogger(__name__)
 
 # This is the key abstraction for network configuration that is user
@@ -81,14 +82,14 @@ class NetworkConnection(models.Model):
 
     @property
     def ctype(self):
-        if (self.ethernetconnection_set.count() > 0):
-            return 'ethernet'
-        if (self.teamconnection_set.count() > 0):
-            return 'team'
-        if (self.bondconnection_set.count() > 0):
-            return 'bond'
-        if (self.bridgeconnection_set.count() > 0):
-            return 'bridge'
+        if self.ethernetconnection_set.count() > 0:
+            return "ethernet"
+        if self.teamconnection_set.count() > 0:
+            return "team"
+        if self.bondconnection_set.count() > 0:
+            return "bond"
+        if self.bridgeconnection_set.count() > 0:
+            return "bridge"
         return None
 
     @property
@@ -117,12 +118,12 @@ class NetworkConnection(models.Model):
 
     @property
     def docker_name(self):
-        logger.debug('The property method docker_name has been triggered')
+        logger.debug("The property method docker_name has been triggered")
         dname = None
         if self.bridgeconnection_set.count() > 0:
             brco = self.bridgeconnection_set.first()
             dname = brco.docker_name
-            logger.debug('dname is {}.'.format(dname))
+            logger.debug("dname is {}.".format(dname))
         return dname
 
     @property
@@ -132,15 +133,15 @@ class NetworkConnection(models.Model):
         Used by rockons.js to list available rocknets available for connection.
         :return: Boolean
         """
-        logger.debug('The property method user_dnet has been triggered')
+        logger.debug("The property method user_dnet has been triggered")
         user_dnet = None
         if self.bridgeconnection_set.count() > 0:
             brco = self.bridgeconnection_set.first()
             user_dnet = brco.usercon
-            logger.debug('default value for user_dnet is {}.'.format(user_dnet))
+            logger.debug("default value for user_dnet is {}.".format(user_dnet))
             if user_dnet:
                 user_dnet = True
-                logger.debug('user_dnet is {}.'.format(user_dnet))
+                logger.debug("user_dnet is {}.".format(user_dnet))
         return user_dnet
 
     @property
@@ -150,7 +151,7 @@ class NetworkConnection(models.Model):
         needed to edit an existing docker network connection.
         :return:
         """
-        logger.debug('The property method docker_options has been triggered')
+        logger.debug("The property method docker_options has been triggered")
         docker_options = {}
         if self.bridgeconnection_set.count() > 0:
             brco = self.bridgeconnection_set.first()
@@ -158,28 +159,39 @@ class NetworkConnection(models.Model):
             # cids = DContainerNetwork.objects.filter(connection=brco.id).values_list('container', flat=True)
             connected_containers = []
             if brco.dcontainernetwork_set.filter(connection=brco.id).count() > 0:
-                for i in range(brco.dcontainernetwork_set.filter(connection=brco.id).count()):
-                    cname = brco.dcontainernetwork_set.filter(
-                        connection=brco.id).order_by('id')[i].container_name
-                    rname = brco.dcontainernetwork_set.filter(
-                        connection=brco.id).order_by('id')[i].container.rockon.name
-                    logger.debug('Connected_containers: for i = {}: {} ({})'.format(i, cname, rname))
-                    connected_containers.append('{} ({})'.format(cname, rname))
+                for i in range(
+                    brco.dcontainernetwork_set.filter(connection=brco.id).count()
+                ):
+                    cname = (
+                        brco.dcontainernetwork_set.filter(connection=brco.id)
+                        .order_by("id")[i]
+                        .container_name
+                    )
+                    rname = (
+                        brco.dcontainernetwork_set.filter(connection=brco.id)
+                        .order_by("id")[i]
+                        .container.rockon.name
+                    )
+                    logger.debug(
+                        "Connected_containers: for i = {}: {} ({})".format(
+                            i, cname, rname
+                        )
+                    )
+                    connected_containers.append("{} ({})".format(cname, rname))
             # for cid in cids:
             #     co = DContainer.objects.get(id=coid)
             #     rockon_name = DContainer.objects.filter(id=coid).rockon.name
-                # rockon_name = RockOn.objects.get(id=rid).name
-            docker_options['aux_address'] = brco.aux_address
-            docker_options['dgateway'] = brco.dgateway
-            docker_options['host_binding'] = brco.host_binding
-            docker_options['icc'] = brco.icc
-            docker_options['internal'] = brco.internal
-            docker_options['ip_masquerade'] = brco.ip_masquerade
-            docker_options['ip_range'] = brco.ip_range
-            docker_options['subnet'] = brco.subnet
-            docker_options['containers'] = connected_containers
+            # rockon_name = RockOn.objects.get(id=rid).name
+            docker_options["aux_address"] = brco.aux_address
+            docker_options["dgateway"] = brco.dgateway
+            docker_options["host_binding"] = brco.host_binding
+            docker_options["icc"] = brco.icc
+            docker_options["internal"] = brco.internal
+            docker_options["ip_masquerade"] = brco.ip_masquerade
+            docker_options["ip_range"] = brco.ip_range
+            docker_options["subnet"] = brco.subnet
+            docker_options["containers"] = connected_containers
         return docker_options
-
 
     # @property
     # def docker_net(self):
@@ -229,12 +241,12 @@ class NetworkDevice(models.Model):
         to be displayed in the network widget on the dashboard.
         :return:
         """
-        if ((self.dtype == 'bridge') and (self.connection is not None)):
+        if (self.dtype == "bridge") and (self.connection is not None):
             return self.connection.docker_name
         return self.name
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
 
 
 # This is the most common of connection types that uses NetworkInterface of
@@ -285,4 +297,4 @@ class BridgeConnection(models.Model):
     subnet = models.CharField(max_length=64, null=True)
 
     class Meta:
-        app_label = 'storageadmin'
+        app_label = "storageadmin"
