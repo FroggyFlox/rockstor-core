@@ -495,9 +495,7 @@ class RockOnView(rfc.GenericView):
 
         url_root = settings.ROCKONS.get("remote_metastore")
         remote_root = "%s/%s" % (url_root, settings.ROCKONS.get("remote_root"))
-        msg = ("Error while processing remote metastore at ({}).").format(
-            remote_root
-        )
+        msg = ("Error while processing remote metastore at ({}).").format(remote_root)
         with self._handle_exception(self.request, msg=msg):
             response = requests.get(remote_root, timeout=10)
             if response.status_code != 200:

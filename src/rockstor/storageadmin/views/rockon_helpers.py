@@ -94,8 +94,9 @@ def generic_start(rockon):
         for c in DContainer.objects.filter(rockon=rockon).order_by("launch_order"):
             run_command([DOCKER, "start", c.name], log=True)
     except Exception as e:
-        logger.error(('Exception while starting the '
-                     'rockon ({}).').format(rockon.name))
+        logger.error(
+            ("Exception while starting the rockon ({}).").format(rockon.name)
+        )
         logger.exception(e)
         new_status = "start_failed"
     finally:
@@ -117,8 +118,9 @@ def generic_stop(rockon):
         for c in DContainer.objects.filter(rockon=rockon).order_by("-launch_order"):
             run_command([DOCKER, "stop", c.name], log=True)
     except Exception as e:
-        logger.debug(('Exception while stopping the '
-                     'rockon ({}).').format(rockon.name))
+        logger.debug(
+            ("Exception while stopping the rockon ({}).").format(rockon.name)
+        )
         logger.exception(e)
         new_status = "stop_failed"
     finally:
