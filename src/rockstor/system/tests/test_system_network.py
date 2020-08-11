@@ -162,6 +162,12 @@ class SystemNetworkTests(unittest.TestCase):
         This tests for correct parsing of nmcli connection config by get_con_config(),
         which should return a dict with detailed config for each network connection detected.
         """
+        # Mock and patch docker-specific calls
+        self.patch_dnets = patch("system.network.dnets")
+        self.mock_dnets = self.patch_dnets.start()
+        self.patch_dnet_inspect = patch("system.network.dnet_inspect")
+        self.mock_dnet_inspect = self.patch_dnet_inspect.start()
+
         con_name = ["c54ea011-0e23-43fa-8f06-23429b9ce714"]
         out = [
             [
@@ -298,6 +304,8 @@ class SystemNetworkTests(unittest.TestCase):
         ]
         err = [[""]]
         rc = [0]
+        dnets_out = [""]
+        dnet_inspect_out = [""]
         expected_result = [
             {
                 "c54ea011-0e23-43fa-8f06-23429b9ce714": {
@@ -431,6 +439,37 @@ class SystemNetworkTests(unittest.TestCase):
         )
         err.append([""])
         rc.append(0)
+        dnets_out.append("")
+        dnet_inspect_out.append(
+            {
+                "Ingress": False,
+                "Name": "bridge",
+                "Created": "2020-08-11T11:06:06.107666148-04:00",
+                "EnableIPv6": False,
+                "Labels": {},
+                "Driver": "bridge",
+                "Attachable": False,
+                "ConfigOnly": False,
+                "Internal": False,
+                "ConfigFrom": {"Network": ""},
+                "Options": {
+                    "com.docker.network.bridge.name": "docker0",
+                    "com.docker.network.bridge.default_bridge": "true",
+                    "com.docker.network.bridge.enable_ip_masquerade": "true",
+                    "com.docker.network.driver.mt": "1500",
+                    "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+                    "com.docker.network.bridge.enable_icc": "true",
+                },
+                "IPAM": {
+                    "Config": [{"Subnet": "172.17.0.0/16", "Gateway": "172.17.0.1"}],
+                    "Driver": "default",
+                    "Options": None,
+                },
+                "Scope": "local",
+                "Id": "fc57dc3d46f9c27bc9b094e58be282b7fca57db3480e0e27e8dd83e0241ad0c8",
+                "Containers": {},
+            }
+        )
         expected_result.append(
             {
                 "7ffa9c37-4559-4608-80de-ea77a27876cd": {
@@ -574,6 +613,33 @@ class SystemNetworkTests(unittest.TestCase):
         )
         err.append([""])
         rc.append(0)
+        dnets_out.append(["rocknet01"])
+        dnet_inspect_out.append(
+            {
+                "Ingress": False,
+                "Name": "rocknet01",
+                "Created": "2020-08-07T16:43:14.04154885-04:00",
+                "EnableIPv6": False,
+                "Labels": {},
+                "Driver": "bridge",
+                "Attachable": False,
+                "ConfigOnly": False,
+                "Internal": False,
+                "ConfigFrom": {"Network": ""},
+                "Options": {
+                    "com.docker.network.bridge.enable_icc": "true",
+                    "com.docker.network.driver.mtu": "1500",
+                },
+                "IPAM": {
+                    "Config": [{"Subnet": "172.20.0.0/16", "Gateway": "172.20.0.1"}],
+                    "Driver": "default",
+                    "Options": {},
+                },
+                "Scope": "local",
+                "Id": "2c7dfdeef407717c107041f6e1e53c3248cf688b78be1f346e4a1079e9da6570",
+                "Containers": {},
+            }
+        )
         expected_result.append(
             {
                 "c344cf82-783e-420e-9d02-30980e058ae5": {
@@ -608,16 +674,20 @@ class SystemNetworkTests(unittest.TestCase):
         # @todo: Add more types of connections, such as docker0, wifi, eth, veth, etc...
 
         # Cycle through each of the above parameter / run_command data sets.
-        for con, o, e, r, expected in zip(con_name, out, err, rc, expected_result):
+        for con, o, e, r, dnet_o, dnet_inspect_o, expected in zip(
+            con_name, out, err, rc, dnets_out, dnet_inspect_out, expected_result
+        ):
             con_list = [con]
             self.mock_run_command.return_value = (o, e, r)
+            self.mock_dnets.return_value = dnet_o
+            self.mock_dnet_inspect.return_value = dnet_inspect_o
             returned = get_con_config(con_list)
             self.assertEqual(
                 returned,
                 expected,
                 msg="Un-expected get_con_config() result:\n "
-                "returned = ({}).\n "
-                "expected = ({}).".format(returned, expected),
+                "returned = {}.\n "
+                "expected = {}.\n ".format(returned, expected),
             )
 
     def test_get_con_config_con_not_found(self):
