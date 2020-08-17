@@ -27,7 +27,7 @@ from storageadmin.models import NetworkConnection, NetworkDevice
 class NetworkTests(APITestMixin, APITestCase):
     # Fixture from single ethernet KVM instance for now to start off new
     # mocking required after recent api change.
-    fixtures = ["test_network2.json"]
+    # fixtures = ["test_network2.json"]
     # TODO: Needs changing as API url different ie connection|devices|refresh
     # see referenced pr in setUpClass
     BASE_URL = "/api/network"
@@ -139,7 +139,6 @@ class NetworkTests(APITestMixin, APITestCase):
     def tearDownClass(cls):
         super(NetworkTests, cls).tearDownClass()
 
-    # TODO: Probably needs a re-write from here down due to API change.
     # N.B. There are working and current system level unit tests in:
     # src/rockstor/system/tests/test_system_network.py
     # Added via pr: "Add unit testing for core network functions" #2045 on GitHub
@@ -163,15 +162,6 @@ class NetworkTests(APITestMixin, APITestCase):
             "response.status_code = ({}).\n "
             "response.data = ({}).\n ".format(response.status_code, response.data),
         )
-
-        # response = self.client.get('{}/connections/17'.format(self.BASE_URL))
-        # # response = self.client.get('/api/network/connections/1')
-        # self.assertEqual(response.status_code,
-        #                  status.HTTP_200_OK,
-        #                  msg="Un-expected get() result:\n"
-        #                      "response.status_code = ({}).\n "
-        #                      "response.data = ({}).\n ".format(response.status_code, response.data)
-        # )
 
     def test_put_invalid_id(self):
         """
@@ -200,57 +190,6 @@ class NetworkTests(APITestMixin, APITestCase):
         mock_nco.return_value = self.temp_rocknet
 
         # Valid rocknet edit
-        # data = {
-        #     "id": 17,
-        #     "ctype": "docker",
-        #     "mtu": "1500",
-        #     "team_profile": "broadcast",
-        #     "bond_profile": "balance-rr",
-        #     "docker_name": "rocknet01",
-        #     "user_dnet": True,
-        #     "docker_options": {
-        #         "aux_address": None,
-        #         "subnet": "172.20.0.0/16",
-        #         "icc": True,
-        #         "ip_masquerade": False,
-        #         "dgateway": "172.20.0.1",
-        #         "internal": False,
-        #         "host_binding": None,
-        #         "ip_range": None,
-        #         "containers": [],
-        #     },
-        #     "name": "br-6088a34098e0",
-        #     "uuid": "4692e942-e7f4-4e94-b62f-cc69d44003e3",
-        #     "state": "activated",
-        #     "autoconnect": True,
-        #     "ipv4_method": "manual",
-        #     "ipv4_addresses": "172.20.0.1/16",
-        #     "ipv4_gw": None,
-        #     "ipv4_dns": None,
-        #     "ipv4_dns_search": None,
-        #     "ipv6_method": None,
-        #     "ipv6_addresses": None,
-        #     "ipv6_gw": None,
-        #     "ipv6_dns": None,
-        #     "ipv6_dns_search": None,
-        #     "master": None,
-        #     "dname": "rocknet01",
-        #     "device": "br-6088a34098e0",
-        #     "devices": ["br-6088a34098e0"],
-        #     "method": "manual",
-        #     "ipaddr": "172.20.0.1/16",
-        #     "gateway": "",
-        #     "dns_servers": "",
-        #     "search_domains": "",
-        #     "aux_address": "",
-        #     "dgateway": "172.20.0.1",
-        #     "ip_range": "",
-        #     "subnet": "172.20.0.0/16",
-        #     "host_binding": "",
-        #     "internal": False,
-        #     "ip_masquerade": False,
-        #     "icc": True,
-        # }
         data = {"id": 17}
         response = self.client.put("{}/connections/17".format(self.BASE_URL), data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK, msg=response.data)
@@ -420,17 +359,11 @@ class NetworkTests(APITestMixin, APITestCase):
 
     # TODO: write test for NetworkConnectionListView._validate_devices
 
-    # @mock.patch("storageadmin.views.network.NetworkConnection.objects")
-    # @mock.patch("storageadmin.views.network.NetworkDevice.objects")
     def test_nclistview_post_devices(self):
         """
         test NetworkConnectionListView.post devices combinations
         :return:
         """
-        # mock_networkconnection.filter.return_value = mock_networkconnection
-        # mock_networkconnection.exists.return_value = False
-        # mock_networkdevice.get.return_value = self.temp_device
-
         # Unknown device for ethernet connection
         data = {
             "id": 99,
@@ -452,15 +385,6 @@ class NetworkTests(APITestMixin, APITestCase):
             e_msg,
             msg="response.data[0] = {}".format(response.data[0]),
         )
-
-        # Devices not a list for team connection
-        # response = self.client.post("{}/connections".format(self.BASE_URL), data=data)
-        # self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #                  msg="response.data = {}\n"
-        #                  "response.status_code = {}".format(response.data, response.status_code))
-        # e_msg = "Unknown network device (eth0)."
-        # self.assertEqual(response.data[0], e_msg,
-        #                  msg="response.data[0] = {}".format(response.data[0]))
 
     @mock.patch("storageadmin.views.network.NetworkDevice.objects")
     def test_nclistview_post_devices_not_list(self, mock_networkdevice):

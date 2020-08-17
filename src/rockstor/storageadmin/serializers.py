@@ -214,7 +214,6 @@ class NetworkConnectionSerializer(serializers.ModelSerializer):
     team_profile = serializers.CharField()
     bond_profile = serializers.CharField()
     docker_name = serializers.CharField()
-    # docker_net = serializers.BooleanField()
     user_dnet = serializers.BooleanField()
     docker_options = serializers.DictField()
 

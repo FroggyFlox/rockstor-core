@@ -40,7 +40,6 @@ NetworkConnectionView = RockstorLayoutView.extend({
         this.template = window.JST.network_new_connection;
         this.devices = new NetworkDeviceCollection();
         this.devices.on('reset', this.renderDevices, this);
-        // this.template.trigger('request', this.renderMethodOptionalFields);
         this.initHandlebarHelpers();
     },
 
@@ -52,12 +51,10 @@ NetworkConnectionView = RockstorLayoutView.extend({
             });
             this.connection.fetch();
         }
-        console.log('At the end of render, this = ', this);
         return this;
     },
 
     renderDevices: function() {
-        console.log('renderDevices was triggered');
         var _this = this;
         $(this.el).empty();
         var connection;
@@ -144,7 +141,6 @@ NetworkConnectionView = RockstorLayoutView.extend({
                 if (!_this.connection) {
                     conn = new NetworkConnection();
                 }
-                console.log('data is = ', data);
                 conn.save(data, {
                     success: function(model, response, options) {
                         app_router.navigate('network', {
@@ -251,7 +247,6 @@ NetworkConnectionView = RockstorLayoutView.extend({
 
     // hide fields when selected method is auto
     renderMethodOptionalFields: function() {
-        console.log('start of renderMethodOptionalFields');
         var selection = this.$('#method').val();
         var ctype = this.$('#ctype').val();
         if (selection == 'auto') {

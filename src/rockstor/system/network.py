@@ -190,7 +190,6 @@ def get_con_config(con_list):
                 elif tmap["ctype"] in ("team", "bond"):
                     tmap[tmap["ctype"]] = {"config": None}
                 elif tmap["ctype"] == "bridge":
-                    # cid, _, _ = run_command([NMCLI, '-g', 'connection.id', 'c', 'show', uuid, ])
                     cid = tmap["name"]
                     tmap[tmap["ctype"]] = {
                         "docker_name": None,
@@ -207,15 +206,9 @@ def get_con_config(con_list):
                     if docker_status():
                         # if (cid[0].startswith('br-')):  # custom-type docker network
                         if cid.startswith("br-"):  # custom-type docker network
-                            logger.debug(
-                                "dnets(cid[3:])[0] is = {}".format(dnets(cid[3:])[0])
-                            )
                             docker_name = dname = dnets(cid[3:])[0]
                         else:  # default docker0 bridge network
                             docker_name = cid
-                            logger.debug(
-                                "dnets docker_name is = {}".format(docker_name)
-                            )
                             dname = "bridge"
                         # Fill custom information, if any.
                         dtmap = dnet_inspect(dname)
@@ -224,7 +217,6 @@ def get_con_config(con_list):
                             tmap[tmap["ctype"]]["aux_address"] = parse_aux_addresses(
                                 dtmap
                             )
-                            # tmap[tmap['ctype']]['aux_address'] = dtmap['IPAM']['Config'][0]['AuxiliaryAddresses']
                         # In some case, DNET inspect does NOT return Gateway in Docker version 18.09.5, build e8ff056
                         # This is likely related to the following bug in which the 'Gateway' is not reported the first
                         # time the docker daemon is started. Upon reload of docker daemon, it IS correctly reported.

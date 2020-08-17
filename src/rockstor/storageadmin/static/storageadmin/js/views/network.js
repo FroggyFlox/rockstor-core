@@ -32,22 +32,18 @@ NetworkView = Backbone.View.extend({
     },
 
     initialize: function() {
-        console.log('Print this at the beginning of initialize NetworkView', this);
         this.template = window.JST.network_network;
         this.collection = new NetworkConnectionCollection();
         this.collection.on('reset', this.renderNetwork, this);
         this.devices = new NetworkDeviceCollection();
         this.devices.on('reset', this.renderNetwork, this);
         this.initHandlebarHelpers();
-        console.log('Print this at the end of initialize NetworkView', this);
     },
 
     render: function() {
-        console.log('Begin render subfunction from NetworkView');
         var _this = this;
         this.collection.fetch();
         this.devices.fetch();
-        console.log('At the end of NetworkView.render, this = ', this);
         return this;
     },
 
@@ -133,7 +129,6 @@ NetworkView = Backbone.View.extend({
     },
 
     deleteConnection: function(event) {
-        console.log('Before confirmation, this =', this);
         if (confirm('Are you sure to delete the connection?')) {
             var _this = this;
             var button = $(event.currentTarget);

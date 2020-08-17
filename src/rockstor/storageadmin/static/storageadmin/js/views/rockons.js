@@ -54,7 +54,6 @@ RockonsView = RockstorLayoutView.extend({
     render: function() {
         this.service.fetch();
         this.rockons.fetch();
-        console.log('Print this at render = ', this);
         this.updateStatus();
 
         return this;
@@ -235,7 +234,6 @@ RockonsView = RockstorLayoutView.extend({
                 _this.updateStatus();
             },
             error: function(data, status, xhr) {
-                console.log('error while starting rockon');
             }
         });
     },
@@ -252,7 +250,6 @@ RockonsView = RockstorLayoutView.extend({
                 _this.updateStatus();
             },
             error: function(data, status, xhr) {
-                console.log('error while stopping rockon');
             }
         });
     },
@@ -310,7 +307,6 @@ RockonsView = RockstorLayoutView.extend({
         Handlebars.registerHelper('display_installedRockons', function() {
             var html = '';
             _this = this;
-            console.log('print this for ROCKON display', this);
             var installed = 0;
             this.rockons.each(function(rockon, index) {
                 if (rockon.get('state') == 'installed' || rockon.get('state').match('pending')) {
@@ -897,7 +893,6 @@ RockonSettingsWizardView = WizardView.extend({
 
     initialize: function() {
         WizardView.prototype.initialize.apply(this, arguments);
-        console.log('this is RockonSettingsWizardView');
         this.template = window.JST.rockons_wizard_summary;
         this.pages = [RockonSettingsSummary, ];
         this.rockon = this.model.get('rockon');
@@ -1053,12 +1048,9 @@ RockonSettingsWizardView = WizardView.extend({
             parent: this,
             evAgg: this.evAgg
         });
-        console.log('this.currentPage is now = ', this.currentPageNum);
-        console.log('this.pages length is = ', this.pages.length);
     },
 
     modifyButtonText: function() {
-        console.log('modifyButtonText has been triggered');
         if (this.currentPageNum == 0) {
             this.$('#prev-page').hide();
             this.$('#add-label').html('Add Label');
@@ -1290,11 +1282,9 @@ RockonAddLabel = RockstorWizardPage.extend({
             }
         }).get();
         var new_labels = {};
-        console.log('field_data is = ', field_data);
         field_data.forEach(function (prop) {
             new_labels[prop] = this.$('#container').val();
         });
-        console.log('new_labels is = ', new_labels);
         this.new_labels = new_labels;
         this.model.set('new_labels', this.new_labels);
         return $.Deferred().resolve();
@@ -1310,28 +1300,19 @@ RockonEditPorts = RockstorWizardPage.extend({
             rid: this.rockon.id
         });
         this.networks = new NetworkConnectionCollection();
-        // this.networks.on('reset', this.renderPorts, this);
         this.containers = new ContainerCollection(null, {
             rid: this.rockon.id
         });
-        // this.containers.setPageSize(100);
-        console.log('This is the RockonEditPorts class, with this = ', this);
         RockstorWizardPage.prototype.initialize.apply(this, arguments);
-        // this.ports.on('reset', this.renderPorts, this);
     },
 
     render: function() {
-        console.log('start render');
         RockstorWizardPage.prototype.render.apply(this, arguments);
         this.fetchPorts();
-        // this.ports.fetch();
-        // this.containers.fetch();
-        // this.networks.fetch();
         return this;
     },
 
     fetchPorts: function() {
-        console.log('start fetchPorts');
         var _this = this;
         this.ports.fetch({
             success: function() {
@@ -1342,7 +1323,6 @@ RockonEditPorts = RockstorWizardPage.extend({
     },
 
     fetchContainers: function() {
-        console.log('start fetchContainers');
         var _this = this;
         this.containers.fetch({
             success: function() {
@@ -1353,7 +1333,6 @@ RockonEditPorts = RockstorWizardPage.extend({
     },
 
     fetchNetworks: function() {
-        console.log('start fetchNetworks');
         var _this = this;
         this.networks.fetch({
             success: function() {
@@ -1364,52 +1343,7 @@ RockonEditPorts = RockstorWizardPage.extend({
     },
 
     renderPorts: function() {
-        console.log('start renderPorts');
-        // this.containers_map = this.model.get('containers');
-        // this.used_containers = [];
-        // for (var c in this.containers_map) {
-        //     this.used_containers.push(c);
-        // }
-        // this.filtered_containers = this.containers.filter(function(container) {
-        //     if (_this.used_containers.indexOf(container.get('name')) == -1) {
-        //         return container;
-        //     }
-        // }, this);
-        // this.ports_map = this.model.get('ports');
-        // this.used_ports = [];
-        // // var _this = this;
-        // for (var p in this.ports_map) {
-        //     this.used_ports.push(p);
-        // }
-        // this.filtered_ports = this.ports.filter(function(port) {
-        //     if (_this.used_ports.indexOf(port.get('label')) == -1) {
-        //         return port;
-        //     }
-        // }, this);
-
         var _this = this;
-        console.log('this.networks at renderPorts start = ', this.model.get('networks'));
-        console.log('this.networks.length is = ', this.model.get('networks').length);
-
-        console.log('this.containers is = ', this.model.get('containers'));
-        console.log('this.containers.length is = ', this.model.get('containers').length);
-
-        // this.used_networks = [];
-        // this.networks.each(function(network, index) {
-        //     _this.used_networks.push(network);
-        // });
-        // console.log('this.used_networks = ', this.used_networks);
-
-        //
-        // this.filtered_networks = this.networks.filter(function(NetworkConnection) {
-        //     if (NetworkConnection.get('user_dnet') == 'true') {
-        //         return NetworkConnection;
-        //     }
-        // }, this);
-        // console.log('filtered_networks = ', this.filtered_networks);
-        // var user_dnets = this.networks.userDnet();
-        // user_dnets.fetch();
-        // console.log('user_dnets is = ', user_dnets);
 
         // Fetch list of docker networks available to be used as rocknets
         this.user_dnets = [];
@@ -1419,24 +1353,10 @@ RockonEditPorts = RockstorWizardPage.extend({
                 this.user_dnets.push(n.toJSON());
             }
         }
-        console.log('this.user_dnets is = ', this.user_dnets);
-
-
-        // this.model.set('networks', this.networks);
-        // console.log('this.networks is = ', this.networks);
-        // console.log('this.networks.toJSON() is = ', this.networks.toJSON());
 
         this.$('#ph-edit-ports-form').html(this.sub_template({
-            // containers: this.filtered_containers.map(function(c) {
-            //     return c.toJSON();
-            // }),
             ports: this.model.get('ports').toJSON(),
             user_dnets: this.user_dnets,
-            // networks: this.model.get('networks').toJSON()
-            // networks: this.networks.toJSON(),
-            // networks: this.networks.map(function(n) {
-            //     return n.toJSON();
-            // })
             containers: this.containers.map(function(c) {
                 return c.toJSON();
             })
@@ -1457,47 +1377,35 @@ RockonEditPorts = RockstorWizardPage.extend({
                             id: params.term,
                             text: params.term
                         };
-
                         return null;
                     }
                 },
-                tags: true
+                tags: true // allows creating rocknet(s) on-the-fly
             });
         });
 
         // Preselect networks fields with currently attached rocknets
-        console.log('this.model.rocknets.length is = ', this.model.get('rocknets').length);
-        console.log('this.containers.length is = ', this.containers.length);
         if (this.model.get('rocknets').length > 0) {
             this.rocknets = this.model.get('rocknets');
             this.rocknets_map = {};
             for (var i = 0; i < this.containers.length; i++) {
                 var c = this.containers.at(i);
                 var cname = c.get('name');
-                console.log('container name cname is = ', cname);
-                // this.rocknets_map['container'] = cname;
                 this.rocknets_map[cname] = [];
             }
-            console.log('this.rocknets_map after container init = ', this.rocknets_map);
             for (var i = 0; i < this.rocknets.length; i++) {
                 var r = this.rocknets.at(i);
-                console.log('r.docker_name is = ', r.get('docker_name'));
-                console.log('r.container_name is = ', r.get('container_name'));
                 var rcname = r.get('container_name');
                 var rdname = r.get('docker_name');
                 this.rocknets_map[rcname].push(rdname);
             }
-            console.log('this.rocknets_map is = ', this.rocknets_map);
             for (var k in this.rocknets_map) {
                 if (this.rocknets_map.hasOwnProperty(k)) {
-                    console.log('The selected rocknets for container %s are %s', k, this.rocknets_map[k]);
                     this.$('#' + k).val(this.rocknets_map[k]);
                     this.$('#' + k).trigger('change');
                 }
             }
         }
-
-        console.log('This during renderPorts', this);
 
         // Ensure previous page is correct
         if (this.rockon.get('volume_add_support')) {
@@ -1509,13 +1417,10 @@ RockonEditPorts = RockstorWizardPage.extend({
     },
 
     save: function() {
-        console.log('save() was triggered');
-
         // // Verify that settings were altered
         // 1. change in ports' publish state?
         // Get ports publish states from form
         var edit_ports = {};
-        // $('input[name^=publish]').map(function(idx, elem) {
         $('.ports-group').map(function(idx, elem) {
             var pstatus = 'unchecked';
             if ($(elem).attr('checked') === 'checked') {
@@ -1523,7 +1428,6 @@ RockonEditPorts = RockstorWizardPage.extend({
             }
             return edit_ports[$(elem).attr('id')] = pstatus;
         }).get();
-        console.log('edit_ports is = ', edit_ports);
 
         // Get current published ports from database
         var psDb = {};
@@ -1534,7 +1438,6 @@ RockonEditPorts = RockstorWizardPage.extend({
             }
             psDb[port.id] = state;
         });
-        console.log('psDb = ', psDb);
 
         // 2. change in rocknets?
         // Get join-networks data
@@ -1542,7 +1445,6 @@ RockonEditPorts = RockstorWizardPage.extend({
         var rocknets_data = _this.$('#join-networks').getJSON();
         Object.keys(rocknets_data).forEach((key) =>
             (rocknets_data[key] === null) && delete rocknets_data[key]);
-        console.log('rocknets_data is = ', rocknets_data);
 
         // Compare to rocknets in database
         var differentRocknets = function (new_nets, reference) {
@@ -1559,19 +1461,16 @@ RockonEditPorts = RockstorWizardPage.extend({
              *                  false otherwise
              */
             if (typeof reference === 'undefined') {
-                console.log('reference is undefined');
                 return Object.keys(new_nets).length > 0;
             } else {
                 // get keys of each object
                 var new_keys = Object.keys(new_nets);
                 if (!new_keys.length > 0) {
-                    console.log('new_nets is emtpy');
                     return true;
                 } else {
                     var ref_keys = Object.keys(reference);
                     // Compare how many containers have rocknets
                     if (new_keys.length != ref_keys.length) {
-                        console.log('The number of containers with rocknet differ');
                         return true;
                     }
                     // for each key, compare arrays
@@ -1580,14 +1479,9 @@ RockonEditPorts = RockstorWizardPage.extend({
                     for (var [key, nets] of new_entries) {
                         // Get all needed values
                         if (nets !== null) {
-                            console.log('the new key is ', key);
-                            console.log('the new nets are ', nets);
                             var ref_val = ref_entries[ref_keys.indexOf(key)][1];
-                            console.log('ref_val is ', ref_val);
                             var new_len = nets.length;
                             var ref_len = ref_val.length;
-                            console.log('new_len is ', new_len);
-                            console.log('ref_len is ', ref_len);
                             // Compare lengths
                             if (new_len != ref_len) {
                                 return true;
@@ -1603,46 +1497,14 @@ RockonEditPorts = RockstorWizardPage.extend({
             }
         };
 
-        console.log('Do Rocknets differ? ', differentRocknets(rocknets_data, this.rocknets_map));
-
-        // if (this.ports_form.valid()) {
         if (JSON.stringify(edit_ports) !== JSON.stringify(psDb)) {
-            console.log('ports_form differs from database');
             var update_mode = 'normal';
         } else if (differentRocknets(rocknets_data, this.rocknets_map)) {
-            console.log('ports_form is NOT valid and Rocknets differ');
             update_mode = 'live';
         } else {
-            console.log('ports_form is NOT valid and Rocknet do NOT differ');
-            // this.ports_validator.showErrors();
             alert('Please customize either ports or rocknets before proceeding further.')
             return $.Deferred().reject();
         }
-        console.log('Update_mode is set as ', update_mode);
-
-        // if (!this.ports_form.valid()) {
-        //     console.log('ports_form is NOT valid');
-        //     this.ports_validator.showErrors();
-        //     return $.Deferred().reject();
-        // }
-
-        // var field_data = $('input[name^=publish]').map(function(idx, elem) {
-        //     return $(elem).attr('checked');
-        // }).get();
-
-
-        // Get join-networks data
-        // var field_data = $(".form-control").val();
-        // var s2_data = $(".form-control").select2('data');
-        // var net_data3 = _this.$('#join-networks').serializeArray();
-        // var cnets2 = {};
-        // for (var i = 0; i < net_data3.length; i++){
-        //     cnets2[net_data3[i]['value']] = net_data3[i]['name'];
-        //     };
-        // console.log('field_data is = ', field_data);
-        // console.log('s2_data is = ', s2_data);
-        // console.log('net_data3 is = ', net_data3);
-        // console.log('cnets2 is = ', cnets2);
 
         // Save to model
         this.edit_ports = edit_ports;
@@ -1651,14 +1513,12 @@ RockonEditPorts = RockstorWizardPage.extend({
         this.model.set('new_cnets', this.new_cnets);
         this.model.set('update_mode', update_mode);
 
-        console.log('Print this = ', this);
         return $.Deferred().resolve();
     }
 });
 
 RockonInfoSummary = RockstorWizardPage.extend({
     initialize: function() {
-        console.log('This is RockonInfoSummary');
         this.template = window.JST.rockons_settings_summary;
         this.sub_template = window.JST.rockons_more_info;
         this.rockon = this.model.get('rockon');
@@ -1676,7 +1536,6 @@ RockonInfoSummary = RockstorWizardPage.extend({
 
 RockonSettingsSummary = RockstorWizardPage.extend({
     initialize: function() {
-        console.log('this is RockonSettingsSummary');
         this.template = window.JST.rockons_settings_summary;
         this.sub_template = window.JST.rockons_settings_summary_table;
         this.rockon = this.model.get('rockon');
@@ -1686,7 +1545,6 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 
     render: function() {
         RockstorWizardPage.prototype.render.apply(this, arguments);
-        console.log('Print THIS at RockonSettingsSummary render: ', this);
         this.$('#ph-settings-summary-table').html(this.sub_template({
             model: this.model,
             volumes: this.model.get('volumes').toJSON(),
@@ -1703,14 +1561,11 @@ RockonSettingsSummary = RockstorWizardPage.extend({
         }));
         // Ensure previous page is correct
         if (!$.isEmptyObject(this.model.get('new_labels'))) {
-            console.log('New_labels is defined');
             this.parent.pages[1] = RockonAddLabel;
         } else if (!$.isEmptyObject(this.model.get('new_cnets')) ||
             typeof this.model.get('update_mode') !== 'undefined') {
-            console.log('New_cnets or update_mode is defined');
             this.parent.pages[1] = RockonEditPorts;
         } else {
-            console.log('neither labels nor ports or rocknets are defined')
             if (this.rockon.get('volume_add_support')) {
                 this.parent.pages[1] = RockonAddShare;
             } else {
@@ -1782,7 +1637,6 @@ RockonSettingsSummary = RockstorWizardPage.extend({
 
 RockonSettingsComplete = RockstorWizardPage.extend({
     initialize: function() {
-        console.log('This is RockonSettingsComplete');
         this.template = window.JST.rockons_update_complete;
         this.rockon = this.model.get('rockon');
         this.shares = this.model.get('shares');
@@ -1790,12 +1644,6 @@ RockonSettingsComplete = RockstorWizardPage.extend({
         this.edit_ports = this.model.get('edit_ports');
         this.new_cnets = this.model.get('new_cnets');
         this.update_mode = this.model.get('update_mode');
-        console.log('this.edits_portJSON = ', JSON.stringify({
-            'labels': this.new_labels,
-            'edit_ports': this.edit_ports,
-            'new_cnets': this.new_cnets,
-            'update_mode': this.update_mode
-        }));
         RockstorWizardPage.prototype.initialize.apply(this, arguments);
     },
 
@@ -1819,26 +1667,11 @@ RockonSettingsComplete = RockstorWizardPage.extend({
         if (!_.isEmpty(this.new_cnets)) dataObj['cnets'] = this.new_cnets;
         if (!_.isEmpty(this.update_mode)) dataObj['update_mode'] = this.update_mode;
 
-        // console.log('data sent is = ', JSON.stringify({
-        //     'labels': this.new_labels,
-        //     'edit_ports': this.edit_ports,
-        //     'new_cnets': this.new_cnets,
-        //     'update_mode': this.update_mode
-        // }));
-        console.log('data to be sent is = ', JSON.stringify(dataObj));
-
         return $.ajax({
             url: '/api/rockons/' + this.rockon.id + '/update',
             type: 'POST',
             dataType: 'json',
             contentType: 'application/json',
-            // data: JSON.stringify({
-            //     'shares': this.shares,
-            //     'labels': this.new_labels,
-            //     'edit_ports': this.edit_ports,
-            //     'cnets': this.new_cnets,
-            //     'update_mode': this.update_mode
-            // }),
             data: JSON.stringify(dataObj),
             success: function() {}
         });

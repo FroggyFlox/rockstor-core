@@ -93,7 +93,6 @@ def dnets(id=None, type=None):
     """
     cmd = list(DNET) + [
         "ls",
-        # '--filter', 'type=custom',
         "--format",
         "{{.Name}}",
     ]
@@ -151,8 +150,6 @@ def probe_running_containers(container=None, network=None, all=False):
     if network:
         cmd.extend((["--filter", "network={}".format(network),]))
     if container:
-        # if all:
-        #     cmd.extend((['-a', ]))
         cmd.extend((running_filters + ["--filter", "name={}".format(container),]))
     else:
         cmd.extend((running_filters))
@@ -242,7 +239,6 @@ def dnet_create(
             [network,]
         )
         run_command(cmd, log=True)
-        # run_command(list(DNET) + ['create', network, ])
     else:
         logger.debug(
             "the network {} was detected, so do NOT create it.".format(network)
@@ -258,19 +254,10 @@ def dnet_connect(container, network, all=False):
     :param all:
     :return:
     """
-    if container in probe_running_containers(container=container, all=all):
-        logger.debug(
-            "The container ({}) is not absent so connect it to the network {}".format(
-                container, network
-            )
-        )
-        if container not in probe_running_containers(network=network, all=all):
-            logger.debug(
-                "The container ({}) is not already connected to the network {}".format(
-                    container, network
-                )
-            )
-            run_command(list(DNET) + ["connect", network, container,], log=True)
+    if (container in probe_running_containers(container=container, all=all)) and (
+        container not in probe_running_containers(network=network, all=all)
+    ):
+        run_command(list(DNET) + ["connect", network, container,], log=True)
 
 
 def dnet_disconnect(container, network):
@@ -287,5 +274,4 @@ def dnet_remove(network=None):
     """
     # First, verify the network still exists
     if network in dnets():
-        logger.debug("the network {} WAS detected, so delete it now.".format(network))
         run_command(list(DNET) + ["rm", network,], log=True)

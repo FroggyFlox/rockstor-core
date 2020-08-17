@@ -18,11 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import models
 from storageadmin.models import Share, BridgeConnection
-import logging
 
 from system.docker import probe_running_containers
-
-logger = logging.getLogger(__name__)
 
 
 class RockOn(models.Model):
