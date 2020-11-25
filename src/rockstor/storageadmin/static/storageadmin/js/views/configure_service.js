@@ -28,7 +28,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
     events: {
         'click #cancel': 'cancel',
-        'click #security': 'toggleFormFields',
+        // 'click #security': 'toggleFormFields', // remnant of #211
         'click #enabletls': 'toggleCertUrl',
         'click #mode': 'toggleNutFields'
     },
@@ -207,11 +207,11 @@ ConfigureServiceView = RockstorLayoutView.extend({
             placement: 'right',
             title: 'Password for the above username.'
         });
-        this.$('#active-directory-form #idmap_range').tooltip({
-            html: true,
-            placement: 'right',
-            title: 'Default should work for most cases. rid idmap backend is the only one supported. The default range is 10000 - 999999.'
-        });
+        // this.$('#active-directory-form #idmap_range').tooltip({
+        //     html: true,
+        //     placement: 'right',
+        //     title: 'Default should work for most cases. rid idmap backend is the only one supported. The default range is 10000 - 999999.'
+        // });
         this.$('#smartd-form #smartd_config').tooltip({
             html: true,
             placement: 'right',
@@ -376,20 +376,21 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         $('#services_modal').modal('hide');
     },
 
-    toggleFormFields: function() {
-
-        if (this.$('#security').val() == 'ads') {
-            this.$('#realm').removeAttr('disabled');
-        } else {
-            this.$('#realm').attr('disabled', 'true');
-        }
-        if (this.$('#security').val() == 'ads' ||
-            this.$('#security').val() == 'domain') {
-            this.$('#templateshell').removeAttr('disabled');
-        } else {
-            this.$('#templateshell').attr('disabled', 'true');
-        }
-    },
+    // The function below is no longer used, was implemented in #211
+    // toggleFormFields: function() {
+    //
+    //     if (this.$('#security').val() == 'ads') {
+    //         this.$('#realm').removeAttr('disabled');
+    //     } else {
+    //         this.$('#realm').attr('disabled', 'true');
+    //     }
+    //     if (this.$('#security').val() == 'ads' ||
+    //         this.$('#security').val() == 'domain') {
+    //         this.$('#templateshell').removeAttr('disabled');
+    //     } else {
+    //         this.$('#templateshell').attr('disabled', 'true');
+    //     }
+    // },
 
     toggleNutFields: function() {
 

@@ -33,6 +33,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 NET = "/usr/bin/net"
+REALM = "/usr/sbin/realm"
+ADCLI = "/usr/sbin/adcli"
 
 
 class ActiveDirectoryServiceView(BaseServiceDetailView):
@@ -52,9 +54,9 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
             socket.gethostbyname(domain)
         except Exception as e:
             e_msg = (
-                "Domain/Realm(%s) could not be resolved. Check "
+                "Domain/Realm({}) could not be resolved. Check "
                 "your DNS configuration and try again. "
-                "Lower level error: %s" % (domain, e.__str__())
+                "Lower level error: {}".format(domain, e.__str__())
             )
             handle_exception(Exception(e_msg), request)
 
@@ -71,29 +73,29 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
             handle_exception(Exception(e_msg), request)
 
     @staticmethod
-    def _join_domain(config, method="winbind"):
+    def _join_domain(config, method="sssd"):
         domain = config.get("domain")
         admin = config.get("username")
-        cmd = [NET, "ads", "join", "-U", admin]
-        if method == "sssd":
-            cmd = ["realm", "join", "-U", admin, domain]
-        return run_command(cmd, input=("%s\n" % config.get("password")))
+        cmd = [REALM, "join", "--membership-software=samba", "-U", admin, domain]
+        if method == "winbind":
+            cmd = [NET, "ads", "join", "-U", admin]
+        return run_command(cmd, input=("{}\n".format(config.get("password"))), log=True)
 
     @staticmethod
-    def _domain_workgroup(domain=None, method="winbind"):
-        cmd = [NET, "ads", "workgroup"]
-        if method == "sssd":
-            cmd = ["adcli", "info", domain]
+    def _domain_workgroup(domain=None, method="sssd"):
+        cmd = [NET, "ads", "workgroup", "-S", domain]
+        if method == "winbind":
+            cmd = [ADCLI, "info", domain]
         o, e, rc = run_command(cmd)
         match_str = "Workgroup:"
-        if method == "sssd":
+        if method == "winbind":
             match_str = "domain-short = "
         for l in o:
             l = l.strip()
             if re.match(match_str, l) is not None:
                 return l.split(match_str)[1].strip()
         raise Exception(
-            "Failed to retrieve Workgroup. out: %s err: %s rc: %d" % (o, e, rc)
+            "Failed to retrieve Workgroup. out: {} err: {} rc: {}".format(o, e, rc)
         )
 
     @staticmethod
@@ -123,22 +125,23 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
         systemctl("sssd", "restart")
 
     @staticmethod
-    def _leave_domain(config, method="winbind"):
-        pstr = "%s\n" % config.get("password")
-        cmd = [NET, "ads", "leave", "-U", config.get("username")]
-        if method == "sssd":
-            cmd = ["realm", "leave", config.get("domain")]
-            return run_command(cmd)
-        try:
-            return run_command(cmd, input=pstr)
-        except:
-            status_cmd = [NET, "ads", "status", "-U", config.get("username")]
-            o, e, rc = run_command(status_cmd, input=pstr, throw=False)
-            if rc != 0:
-                return logger.debug(
-                    "Status shows not joined. out: %s err: %s rc: %d" % (o, e, rc)
-                )
-            raise
+    def _leave_domain(config, method="sssd"):
+        pstr = "{}\n".format(config.get("password"))
+        cmd = [REALM, "leave", config.get("domain")]
+        if method == "winbind":
+            cmd = [NET, "ads", "leave", "-U", config.get("username")]
+            try:
+                return run_command(cmd, input=pstr)
+            except:
+                status_cmd = [NET, "ads", "status", "-U", config.get("username")]
+                o, e, rc = run_command(status_cmd, input=pstr, throw=False)
+                if rc != 0:
+                    return logger.debug(
+                        "Status shows not joined. out: %s err: %s rc: %d" % (o, e, rc)
+                    )
+                raise
+        else:
+            run_command(cmd, log=True)
 
     def _config(self, service, request):
         try:
@@ -154,56 +157,59 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
     def post(self, request, command):
 
         with self._handle_exception(request):
-            method = "winbind"
+            # method = "winbind"
+            method = "sssd"
             service = Service.objects.get(name="active-directory")
             if command == "config":
                 config = request.data.get("config")
+                logger.debug("config is = {}".format(config))
                 self._validate_config(config, request)
 
                 # 1. Name resolution check
                 self._resolve_check(config.get("domain"), request)
 
                 # 2. realm discover check?
-                # @todo: phase our realm and just use net?
                 domain = config.get("domain")
                 try:
-                    cmd = ["realm", "discover", "--name-only", domain]
+                    cmd = [REALM, "discover", "--name-only", domain]
                     o, e, rc = run_command(cmd)
                 except Exception as e:
                     e_msg = (
-                        "Failed to discover the given(%s) AD domain. "
-                        "Error: %s" % (domain, e.__str__())
+                        "Failed to discover the given({}) AD domain. "
+                        "Error: {}".format(domain, e.__str__())
                     )
                     handle_exception(Exception(e_msg), request)
 
-                default_range = "10000 - 999999"
-                idmap_range = config.get("idmap_range", "10000 - 999999")
-                idmap_range = idmap_range.strip()
-                if len(idmap_range) > 0:
-                    rfields = idmap_range.split()
-                    if len(rfields) != 3:
-                        raise Exception(
-                            "Invalid idmap range. valid format is "
-                            "two integers separated by a -. eg: "
-                            "10000 - 999999"
-                        )
-                    try:
-                        rlow = int(rfields[0].strip())
-                        rhigh = int(rfields[2].strip())
-                    except Exception as e:
-                        raise Exception(
-                            "Invalid idmap range. Numbers in the "
-                            "range must be valid integers. "
-                            "Error: %s." % e.__str__()
-                        )
-                    if rlow >= rhigh:
-                        raise Exception(
-                            "Invalid idmap range. Numbers in the "
-                            "range must go from low to high. eg: "
-                            "10000 - 999999"
-                        )
-                else:
-                    config["idmap_range"] = default_range
+                # @TODO: add support for custom sssd.conf options
+
+                # default_range = "10000 - 999999"
+                # idmap_range = config.get("idmap_range", "10000 - 999999")
+                # idmap_range = idmap_range.strip()
+                # if len(idmap_range) > 0:
+                #     rfields = idmap_range.split()
+                #     if len(rfields) != 3:
+                #         raise Exception(
+                #             "Invalid idmap range. valid format is "
+                #             "two integers separated by a -. eg: "
+                #             "10000 - 999999"
+                #         )
+                #     try:
+                #         rlow = int(rfields[0].strip())
+                #         rhigh = int(rfields[2].strip())
+                #     except Exception as e:
+                #         raise Exception(
+                #             "Invalid idmap range. Numbers in the "
+                #             "range must be valid integers. "
+                #             "Error: %s." % e.__str__()
+                #         )
+                #     if rlow >= rhigh:
+                #         raise Exception(
+                #             "Invalid idmap range. Numbers in the "
+                #             "range must go from low to high. eg: "
+                #             "10000 - 999999"
+                #         )
+                # else:
+                #     config["idmap_range"] = default_range
 
                 self._save_config(service, config)
 
@@ -257,6 +263,8 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 self._save_config(service, config)
                 update_global_config(smb_config, config)
                 self._join_domain(config, method=method)
+
+                # Customize SSSD config
                 if method == "sssd" and config.get("enumerate") is True:
                     self._update_sssd(domain)
 
@@ -276,7 +284,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     systemctl("smb", "restart")
                     systemctl("nmb", "restart")
                 except Exception as e:
-                    e_msg = "Failed to leave AD domain(%s). Error: %s" % (
+                    e_msg = "Failed to leave AD domain({}). Error: {}".format(
                         config.get("domain"),
                         e.__str__(),
                     )
