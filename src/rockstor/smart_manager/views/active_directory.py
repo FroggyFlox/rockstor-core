@@ -25,6 +25,7 @@ from storageadmin.util import handle_exception
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
+from system.active_directory import update_nss
 from system.osi import run_command
 from system.samba import update_global_config
 from system.services import systemctl
@@ -215,13 +216,14 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
 
             elif command == "start":
                 config = self._config(service, request)
-                smbo = Service.objects.get(name="smb")
-                smb_config = self._get_config(smbo)
                 domain = config.get("domain")
                 # 1. make sure ntpd is running, or else, don't start.
                 self._ntp_check(request)
                 # 2. Name resolution check?
                 self._resolve_check(config.get("domain"), request)
+                # 3. Get current Samba config
+                smbo = Service.objects.get(name="smb")
+                smb_config = self._get_config(smbo)
 
                 if method == "winbind":
                     cmd = [
@@ -268,6 +270,9 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 if method == "sssd" and config.get("enumerate") is True:
                     self._update_sssd(domain)
 
+                # Update nsswitch.conf
+                update_nss(["passwd", "group"], "sss")
+
                 if method == "winbind":
                     systemctl("winbind", "enable")
                     systemctl("winbind", "start")
@@ -283,10 +288,10 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     update_global_config(smb_config)
                     systemctl("smb", "restart")
                     systemctl("nmb", "restart")
+                    update_nss(["passwd", "group"], "sss", remove=True)
                 except Exception as e:
                     e_msg = "Failed to leave AD domain({}). Error: {}".format(
-                        config.get("domain"),
-                        e.__str__(),
+                        config.get("domain"), e.__str__(),
                     )
                     handle_exception(Exception(e_msg), request)
 
