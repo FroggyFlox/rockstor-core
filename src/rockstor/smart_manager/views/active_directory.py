@@ -16,16 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import re
 import socket
-from tempfile import mkstemp
-import shutil
 from rest_framework.response import Response
 from storageadmin.util import handle_exception
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
-from system.active_directory import update_nss
+from system.active_directory import (
+    update_nss,
+    update_sssd,
+    join_domain,
+    domain_workgroup,
+    leave_domain,
+)
 from system.osi import run_command
 from system.samba import update_global_config
 from system.services import systemctl
@@ -72,77 +75,6 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
             e_msg = "Administrator password is required but missing in the input"
         if e_msg is not None:
             handle_exception(Exception(e_msg), request)
-
-    @staticmethod
-    def _join_domain(config, method="sssd"):
-        domain = config.get("domain")
-        admin = config.get("username")
-        cmd = [REALM, "join", "--membership-software=samba", "-U", admin, domain]
-        if method == "winbind":
-            cmd = [NET, "ads", "join", "-U", admin]
-        return run_command(cmd, input=("{}\n".format(config.get("password"))), log=True)
-
-    @staticmethod
-    def _domain_workgroup(domain=None, method="sssd"):
-        cmd = [NET, "ads", "workgroup", "-S", domain]
-        if method == "winbind":
-            cmd = [ADCLI, "info", domain]
-        o, e, rc = run_command(cmd)
-        match_str = "Workgroup:"
-        if method == "winbind":
-            match_str = "domain-short = "
-        for l in o:
-            l = l.strip()
-            if re.match(match_str, l) is not None:
-                return l.split(match_str)[1].strip()
-        raise Exception(
-            "Failed to retrieve Workgroup. out: {} err: {} rc: {}".format(o, e, rc)
-        )
-
-    @staticmethod
-    def _update_sssd(domain):
-        # add enumerate = True in sssd so user/group lists will be
-        # visible on the web-ui.
-        el = "enumerate = True\n"
-        fh, npath = mkstemp()
-        sssd_config = "/etc/sssd/sssd.conf"
-        with open(sssd_config) as sfo, open(npath, "w") as tfo:
-            domain_section = False
-            for line in sfo.readlines():
-                if domain_section is True:
-                    if len(line.strip()) == 0 or line[0] == "[":
-                        # empty line or new section without empty line before
-                        # it.
-                        tfo.write(el)
-                        domain_section = False
-                elif re.match("\[domain/%s]" % domain, line) is not None:
-                    domain_section = True
-                tfo.write(line)
-            if domain_section is True:
-                # reached end of file, also coinciding with end of domain
-                # section
-                tfo.write(el)
-        shutil.move(npath, sssd_config)
-        systemctl("sssd", "restart")
-
-    @staticmethod
-    def _leave_domain(config, method="sssd"):
-        pstr = "{}\n".format(config.get("password"))
-        cmd = [REALM, "leave", config.get("domain")]
-        if method == "winbind":
-            cmd = [NET, "ads", "leave", "-U", config.get("username")]
-            try:
-                return run_command(cmd, input=pstr)
-            except:
-                status_cmd = [NET, "ads", "status", "-U", config.get("username")]
-                o, e, rc = run_command(status_cmd, input=pstr, throw=False)
-                if rc != 0:
-                    return logger.debug(
-                        "Status shows not joined. out: %s err: %s rc: %d" % (o, e, rc)
-                    )
-                raise
-        else:
-            run_command(cmd, log=True)
 
     def _config(self, service, request):
         try:
@@ -261,14 +193,14 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                         "--enablelocauthorize",
                     ]
                     run_command(cmd)
-                config["workgroup"] = self._domain_workgroup(domain, method=method)
+                config["workgroup"] = domain_workgroup(domain, method=method)
                 self._save_config(service, config)
                 update_global_config(smb_config, config)
-                self._join_domain(config, method=method)
+                join_domain(config, method=method)
 
                 # Customize SSSD config
                 if method == "sssd" and config.get("enumerate") is True:
-                    self._update_sssd(domain)
+                    update_sssd(domain)
 
                 # Update nsswitch.conf
                 update_nss(["passwd", "group"], "sss")
@@ -282,7 +214,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
             elif command == "stop":
                 config = self._config(service, request)
                 try:
-                    self._leave_domain(config, method=method)
+                    leave_domain(config, method=method)
                     smbo = Service.objects.get(name="smb")
                     smb_config = self._get_config(smbo)
                     update_global_config(smb_config)
