@@ -199,8 +199,13 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 join_domain(config, method=method)
 
                 # Customize SSSD config
-                if method == "sssd" and config.get("enumerate") is True:
-                    update_sssd(domain)
+                logger.debug("SSSD config if = {}".format(config))
+                if (
+                    method == "sssd"
+                    and (config.get("enumerate") or config.get("case_sensitive"))
+                    is True
+                ):
+                    update_sssd(domain, config)
 
                 # Update nsswitch.conf
                 update_nss(["passwd", "group"], "sss")

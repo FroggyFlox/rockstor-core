@@ -62,14 +62,23 @@ def update_nss(databases, provider, remove=False):
     )
 
 
-def update_sssd(domain):
+def update_sssd(domain, config):
     """
     Add enumerate = True in sssd so user/group lists will be
     visible on the web-ui.
-    :param domain: String - Domain to which the setting should apply
+    :param domain: String - Domain to which the update should apply
+    :param config: Dict - Active Directory service configuration
     :return:
     """
     el = "enumerate = True\n"
+    csl = "case_sensitive = True\n"
+    opts = []
+    if config.get("enumerate") is True:
+        opts.append(el)
+    if config.get("case_sensitive") is True:
+        opts.append(csl)
+    ol = "".join(opts)
+    logger.debug("ol is = {}".format(ol))
     fh, npath = mkstemp()
     # sssd_config = "/etc/sssd/sssd.conf"
     with open(SSSD_FILE) as sfo, open(npath, "w") as tfo:
@@ -79,7 +88,7 @@ def update_sssd(domain):
                 if len(line.strip()) == 0 or line[0] == "[":
                     # empty line or new section without empty line before
                     # it.
-                    tfo.write(el)
+                    tfo.write(ol)
                     domain_section = False
             elif re.match("\[domain/%s]" % domain, line) is not None:
                 domain_section = True
@@ -87,7 +96,7 @@ def update_sssd(domain):
         if domain_section is True:
             # reached end of file, also coinciding with end of domain
             # section
-            tfo.write(el)
+            tfo.write(ol)
     move(npath, SSSD_FILE)
     # Set file to rw- --- --- (600) via stat constants.
     os.chmod(SSSD_FILE, stat.S_IRUSR | stat.S_IWUSR)
@@ -108,7 +117,11 @@ def join_domain(config, method="sssd"):
     """
     domain = config.get("domain")
     admin = config.get("username")
-    cmd = [REALM, "join", "--membership-software=samba", "-U", admin, domain]
+    cmd = [REALM, "join", "-U", admin, domain]
+    cmd_options = ["--membership-software=samba", ]
+    if config.get("no_ldap_id_mapping") is True:
+        cmd_options.append("--automatic-id-mapping=no")
+    cmd[-3:-3] = cmd_options
     if method == "winbind":
         cmd = [NET, "ads", "join", "-U", admin]
     return run_command(cmd, input=("{}\n".format(config.get("password"))), log=True)

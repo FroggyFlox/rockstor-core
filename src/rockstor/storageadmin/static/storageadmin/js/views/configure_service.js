@@ -148,6 +148,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
             'after 16 minutes': 960,
             'after 32 minutes': 1920
         };
+        console.log("configObj is = ", configObj);
         _this.nutShutdownTimes = nutShutdownTimes;
         $(this.el).html(this.template({
             service: this.service,
@@ -195,7 +196,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
         this.$('#active-directory-form #domain').tooltip({
             html: true,
             placement: 'right',
-            title: 'Windows Active Directory or Domain Controller to connect to.'
+            title: 'Windows Active Directory or Domain Controller to which to connect.'
         });
         this.$('#active-directory-form #username').tooltip({
             html: true,
