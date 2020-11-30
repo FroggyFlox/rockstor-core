@@ -199,7 +199,6 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 join_domain(config, method=method)
 
                 # Customize SSSD config
-                logger.debug("SSSD config if = {}".format(config))
                 if (
                     method == "sssd"
                     and (config.get("enumerate") or config.get("case_sensitive"))
@@ -210,11 +209,12 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                 # Update nsswitch.conf
                 update_nss(["passwd", "group"], "sss")
 
-                if method == "winbind":
-                    systemctl("winbind", "enable")
-                    systemctl("winbind", "start")
                 systemctl("smb", "restart")
                 systemctl("nmb", "restart")
+                # The winbind service is required only for id mapping while
+                # accessing samba shares hosted by Rockstor
+                systemctl("winbind", "enable")
+                systemctl("winbind", "start")
 
             elif command == "stop":
                 config = self._config(service, request)
@@ -225,6 +225,8 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     update_global_config(smb_config)
                     systemctl("smb", "restart")
                     systemctl("nmb", "restart")
+                    systemctl("winbind", "stop")
+                    systemctl("winbind", "disable")
                     update_nss(["passwd", "group"], "sss", remove=True)
                 except Exception as e:
                     e_msg = "Failed to leave AD domain({}). Error: {}".format(

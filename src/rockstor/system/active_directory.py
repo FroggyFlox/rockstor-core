@@ -78,7 +78,6 @@ def update_sssd(domain, config):
     if config.get("case_sensitive") is True:
         opts.append(csl)
     ol = "".join(opts)
-    logger.debug("ol is = {}".format(ol))
     fh, npath = mkstemp()
     # sssd_config = "/etc/sssd/sssd.conf"
     with open(SSSD_FILE) as sfo, open(npath, "w") as tfo:
