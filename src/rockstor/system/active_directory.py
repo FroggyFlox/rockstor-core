@@ -173,3 +173,34 @@ def domain_workgroup(domain=None, method="sssd"):
     raise Exception(
         "Failed to retrieve Workgroup. out: {} err: {} rc: {}".format(o, e, rc)
     )
+
+
+def validate_idmap_range(config):
+    default_range = "10000 - 999999"
+    idmap_range = config.get("idmap_range", "10000 - 999999")
+    idmap_range = idmap_range.strip()
+    if len(idmap_range) > 0:
+        rfields = idmap_range.split()
+        if len(rfields) != 3:
+            raise Exception(
+                "Invalid idmap range. valid format is "
+                "two integers separated by a -. eg: "
+                "10000 - 999999"
+            )
+        try:
+            rlow = int(rfields[0].strip())
+            rhigh = int(rfields[2].strip())
+        except Exception as e:
+            raise Exception(
+                "Invalid idmap range. Numbers in the "
+                "range must be valid integers. "
+                "Error: {}.".format(e.__str__())
+            )
+        if rlow >= rhigh:
+            raise Exception(
+                "Invalid idmap range. Numbers in the "
+                "range must go from low to high. eg: "
+                "10000 - 999999"
+            )
+    else:
+        config["idmap_range"] = default_range
