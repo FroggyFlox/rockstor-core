@@ -88,7 +88,6 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
     def post(self, request, command):
 
         with self._handle_exception(request):
-            # method = "winbind"
             method = "sssd"
             service = Service.objects.get(name="active-directory")
             if command == "config":

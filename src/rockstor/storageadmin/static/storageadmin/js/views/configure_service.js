@@ -148,7 +148,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
             'after 16 minutes': 960,
             'after 32 minutes': 1920
         };
-        console.log("configObj is = ", configObj);
         _this.nutShutdownTimes = nutShutdownTimes;
         $(this.el).html(this.template({
             service: this.service,
