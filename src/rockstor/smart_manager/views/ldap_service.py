@@ -28,7 +28,8 @@ from smart_manager.models import Service
 
 import logging
 
-from system.directory_services import update_nss, sssd_add_ldap
+from system.directory_services import update_nss, sssd_add_ldap, sssd_remove_ldap
+from system.services import systemctl
 
 logger = logging.getLogger(__name__)
 
@@ -97,24 +98,27 @@ class LdapServiceView(BaseServiceDetailView):
                     "enumerate": config.get("enumerate")
                 }
                 # Update SSSD config
-                sssd_add_ldap(ldap_params)
-
+                try:
+                    sssd_add_ldap(ldap_params)
+                    systemctl("sssd", "enable")
+                except Exception as e:
+                    logger.exception(e)
+                    e_msg = "Failed to start LDAP service due to system error."
+                    handle_exception(Exception(e_msg), request)
                 # Update nsswitch.conf
                 update_nss(["passwd", "group"], "sss")
 
             elif command == "stop":
-                # stop LDAP service
+                config = self._config(service, request)
+                try:
+                    sssd_remove_ldap(config.get("server"))
+                    systemctl("sssd", "disable")
+                    systemctl("sssd", "stop")
+                except Exception as e:
+                    logger.exception(e)
+                    e_msg = "Failed to stop LDAP service due to system error."
+                    handle_exception(Exception(e_msg), request)
                 # Remove domain from SSSD config
                 update_nss(["passwd", "group"], "sss", remove=True)
-
-            # else:
-            #     try:
-            #         toggle_auth_service(
-            #             "ldap", command, config=self._get_config(service)
-            #         )
-            #     except Exception as e:
-            #         logger.exception(e)
-            #         e_msg = "Failed to %s ldap service due to system error." % command
-            #         handle_exception(Exception(e_msg), request)
 
             return Response()

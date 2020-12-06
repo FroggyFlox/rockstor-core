@@ -159,6 +159,38 @@ def sssd_add_ldap(ldap_params):
     )
     systemctl("sssd", "restart")
 
+def sssd_remove_ldap(server):
+    # Write to file
+    fh, npath = mkstemp()
+    with open(SSSD_FILE) as sfo, open(npath, "w") as tfo:
+        sssd_section = False
+        domain_section = False
+        for line in sfo.readlines():
+            if sssd_section is True:
+                if re.match("domains = ", line) is not None:
+                    tfo.write(line.replace(server, ""))
+                    sssd_section = False
+                    continue
+            elif domain_section is True:
+                continue
+            elif re.match("\[sssd]", line) is not None:
+                sssd_section = True
+            elif re.match("\[domain/{}]".format(server), line) is not None:
+                domain_section = True
+                continue
+            elif len(line.strip()) == 0:
+                # empty line
+                domain_section = False
+            tfo.write(line)
+    move(npath, SSSD_FILE)
+    # Set file to rw- --- --- (600) via stat constants.
+    os.chmod(SSSD_FILE, stat.S_IRUSR | stat.S_IWUSR)
+    logger.debug(
+        "The configuration of the {} domain in {} has been removed".format(
+            server, SSSD_FILE
+        )
+    )
+
 
 def join_domain(config, method="sssd"):
     """
