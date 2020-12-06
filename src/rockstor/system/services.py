@@ -26,11 +26,11 @@ from django.conf import settings
 
 from osi import run_command
 
-AUTHCONFIG = "/usr/sbin/authconfig"
 SSHD_CONFIG = "/etc/ssh/sshd_config"
 SYSTEMCTL_BIN = "/usr/bin/systemctl"
 SUPERCTL_BIN = "%s/bin/supervisorctl" % settings.ROOT_DIR
 SUPERVISORD_CONF = "%s/etc/supervisord.conf" % settings.ROOT_DIR
+SSSD_FILE = "/etc/sssd/sssd.conf"
 NET = "/usr/bin/net"
 WBINFO = "/usr/bin/wbinfo"
 REALM = "/usr/sbin/realm"
@@ -58,6 +58,7 @@ def init_service_op(service_name, command, throw=True):
         "docker",
         "smartd",
         "shellinaboxd",
+        "sssd",
         "nut-server",
         "rockstor-bootstrap",
         "rockstor",
@@ -135,7 +136,19 @@ def service_status(service_name, config=None):
         else:
             return init_service_op("nfs-server", "status", throw=False)
     elif service_name == "ldap":
-        return init_service_op("nslcd", "status", throw=False)
+        o, e, rc = init_service_op("sssd", "status", throw=False)
+        # initial check on sssd status: 0 = OK 3 = stopped
+        if rc != 0:
+            return o, e, rc
+        # sssd is also used for the Active Directory service, so we need to
+        # check if an LDAP domain is configured as well in its config file
+        with open(SSSD_FILE) as sfo:
+            for line in sfo.readlines():
+                if (
+                    re.search("domains = ", line) and re.search(config["server"], line)
+                ) is not None:
+                    return o, e, rc
+            return o, e, 1
     elif service_name == "sftp":
         out, err, rc = init_service_op("sshd", "status", throw=False)
         # initial check on sshd status: 0 = OK 3 = stopped
@@ -148,7 +161,7 @@ def service_status(service_name, config=None):
                 if re.match(settings.SFTP_STR, line) is not None:
                     return out, err, rc
             # -1 not appropriate as inconsistent with bash return codes
-            # Returning 1 as Catchall for general errors.  the calling system
+            # Returning 1 as Catchall for general errors. The calling system
             # interprets -1 as enabled, 1 works for disabled.
             return out, err, 1
     elif service_name in ("replication", "data-collector", "ztask-daemon"):
@@ -186,7 +199,7 @@ def service_status(service_name, config=None):
             # if wbinfo_trust[2] == 0 and wbinfo_auth[2] == 0:
             #     active_directory_rc = 0
             active_directory_rc = 1
-            o, e, rc = run_command([REALM, "list", "--name-only", ])
+            o, e, rc = run_command([REALM, "list", "--name-only",])
             if config["domain"] in o:
                 active_directory_rc = 0
             return "", "", active_directory_rc
@@ -208,18 +221,6 @@ def ldap_input(config, command):
             ac_cmd.append("--enableldaptls")
             ac_cmd.append("--ldaploadcacert={}".format(config["cert"]))
     return ac_cmd
-
-
-def toggle_auth_service(service, command, config=None):
-    ac_cmd = [
-        AUTHCONFIG,
-        "--update",
-    ]
-    if service == "ldap":
-        ac_cmd.extend(ldap_input(config, command))
-    else:
-        return None
-    return run_command(ac_cmd)
 
 
 def update_nginx(ip, port):

@@ -62,7 +62,7 @@ def update_nss(databases, provider, remove=False):
     )
 
 
-def update_sssd(domain, config):
+def update_sssd_ad(domain, config):
     """
     Add enumerate = True in sssd so user/group lists will be
     visible on the web-ui.
@@ -102,6 +102,59 @@ def update_sssd(domain, config):
     logger.debug(
         "The configuration of the {} domain in {} has been updated".format(
             domain, SSSD_FILE
+        )
+    )
+    systemctl("sssd", "restart")
+
+
+def sssd_add_ldap(ldap_params):
+    # Prepare options to write
+    server = ldap_params["server"]
+    opts = {
+        "ldap_id_use_start_tls": "True",
+        "cache_credentials": "True",
+        "ldap_search_base": "{}".format(ldap_params["basedn"]),
+        "id_provider": "ldap",
+        "auth_provider": "ldap",
+        "chpass_provider": "ldap",
+        "ldap_uri": "{}".format(ldap_params["ldap_uri"]),
+        "ldap_tls_reqcert": "demand",
+        "ldap_tls_cacert": "{}".format(ldap_params["cacertpath"]),
+        "ldap_tls_cacertdir": "{}".format(ldap_params["cacert_dir"]),
+        "enumerate": "{}".format(ldap_params["enumerate"])
+    }
+    # Write to file
+    fh, npath = mkstemp()
+    # sssd_config = "/etc/sssd/sssd.conf"
+    with open(SSSD_FILE) as sfo, open(npath, "w") as tfo:
+        sssd_section = False
+        domain_section = False
+        for line in sfo.readlines():
+            if sssd_section is True:
+                if re.match("domains = ", line) is not None:
+                    tfo.write("".join([line.strip(), " {}\n".format(server)]))
+                    sssd_section = False
+                    continue
+            elif domain_section is True:
+                for k, v in opts.items():
+                    if re.match(k, line) is None:
+                        tfo.write("{} = {}\n".format(k, v))
+            elif re.match("\[sssd]", line) is not None:
+                sssd_section = True
+            elif re.match("\[domain/{}]".format(server), line) is not None:
+                domain_section = True
+            tfo.write(line)
+        if domain_section is False:
+            # reached end of file, also coinciding with end of domain section
+            tfo.write("\n[domain/{}]\n".format(server))
+            for k,v in opts.items():
+                tfo.write("{} = {}\n".format(k, v))
+    move(npath, SSSD_FILE)
+    # Set file to rw- --- --- (600) via stat constants.
+    os.chmod(SSSD_FILE, stat.S_IRUSR | stat.S_IWUSR)
+    logger.debug(
+        "The configuration of the {} domain in {} has been updated".format(
+            server, SSSD_FILE
         )
     )
     systemctl("sssd", "restart")

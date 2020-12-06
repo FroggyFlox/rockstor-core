@@ -22,9 +22,9 @@ from storageadmin.util import handle_exception
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
-from system.active_directory import (
+from system.directory_services import (
     update_nss,
-    update_sssd,
+    update_sssd_ad,
     join_domain,
     domain_workgroup,
     leave_domain,
@@ -80,7 +80,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
         except Exception as e:
             e_msg = (
                 "Missing configuration. Please configure the "
-                "service and try again. Exception: %s" % e.__str__()
+                "service and try again. Exception: {}".format(e.__str__())
             )
             handle_exception(Exception(e_msg), request)
 
@@ -172,7 +172,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     and (config.get("enumerate") or config.get("case_sensitive"))
                     is True
                 ):
-                    update_sssd(domain, config)
+                    update_sssd_ad(domain, config)
 
                 # Update nsswitch.conf
                 update_nss(["passwd", "group"], "sss")

@@ -29,7 +29,7 @@ ConfigureServiceView = RockstorLayoutView.extend({
     events: {
         'click #cancel': 'cancel',
         // 'click #security': 'toggleFormFields', // remnant of #211
-        'click #enabletls': 'toggleCertUrl',
+        // 'click #enabletls': 'toggleCertUrl',
         'click #mode': 'toggleNutFields'
     },
 
@@ -58,15 +58,17 @@ ConfigureServiceView = RockstorLayoutView.extend({
                 rocommunity: 'required'
             },
             ldap: {
+                // @todo: add further validation of server, basedn, and cert
                 server: 'required',
                 basedn: 'required',
-                cert: {
-                    required: {
-                        depends: function(element) {
-                            return _this.$('#enabletls').prop('checked');
-                        }
-                    }
-                }
+                cert: 'required'
+                // cert: {
+                //     required: {
+                //         depends: function(element) {
+                //             return _this.$('#enabletls').prop('checked');
+                //         }
+                //     }
+                // }
             },
             docker: {
                 rootshare: 'required'
@@ -426,15 +428,15 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         }
     },
 
-    toggleCertUrl: function() {
-
-        var cbox = this.$('#enabletls');
-        if (cbox.prop('checked')) {
-            this.$('#cert-ph').css('visibility', 'visible');
-        } else {
-            this.$('#cert-ph').css('visibility', 'hidden');
-        }
-    },
+    // toggleCertUrl: function() {
+    //
+    //     var cbox = this.$('#enabletls');
+    //     if (cbox.prop('checked')) {
+    //         this.$('#cert-ph').css('visibility', 'visible');
+    //     } else {
+    //         this.$('#cert-ph').css('visibility', 'hidden');
+    //     }
+    // },
 
     initHandlebarHelpers: function() {
 
