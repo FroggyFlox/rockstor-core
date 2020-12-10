@@ -24,7 +24,7 @@ from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 from system.directory_services import (
     update_nss,
-    update_sssd_ad,
+    sssd_update_ad,
     join_domain,
     domain_workgroup,
     leave_domain,
@@ -109,7 +109,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                         "Error: {}".format(domain, e.__str__())
                     )
                     handle_exception(Exception(e_msg), request)
-
+                # Would be required only if method == "winbind":
                 # validate_idmap_range(config)
 
                 self._save_config(service, config)
@@ -172,7 +172,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                     and (config.get("enumerate") or config.get("case_sensitive"))
                     is True
                 ):
-                    update_sssd_ad(domain, config)
+                    sssd_update_ad(domain, config)
 
                 # Update nsswitch.conf
                 update_nss(["passwd", "group"], "sss")

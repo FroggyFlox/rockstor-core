@@ -199,7 +199,7 @@ def service_status(service_name, config=None):
             # if wbinfo_trust[2] == 0 and wbinfo_auth[2] == 0:
             #     active_directory_rc = 0
             active_directory_rc = 1
-            o, e, rc = run_command([REALM, "list", "--name-only",])
+            o, e, rc = run_command([REALM, "list", "--name-only", ])
             if config["domain"] in o:
                 active_directory_rc = 0
             return "", "", active_directory_rc

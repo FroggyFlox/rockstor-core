@@ -35,6 +35,37 @@ SSSD_FILE = "/etc/sssd/sssd.conf"
 NET = "/usr/bin/net"
 REALM = "/usr/sbin/realm"
 ADCLI = "/usr/sbin/adcli"
+OPENSSL = "/usr/bin/openssl"
+
+
+def validate_tsl_cert(server, cert):
+    """
+    Run openssl s_client -connect server:389 -CAfile path-to-cert
+    to verify the provided TSL certificate against the LDAP server.
+    :param server: String - FQDN of the LDAP server
+    :param cert: String - Absolute path to the TSL certificate
+    :return:
+    """
+    cmd = [
+        OPENSSL,
+        "s_client",
+        "-connect",
+        "{}:389".format(server),
+        "-CAfile",
+        cert,
+    ]
+    o, e, rc = run_command(cmd, throw=False)
+    if "Verification: OK" not in o:
+        err_msg = (
+            "Failed to validate the TSL certificate ({}).\n"
+            "out: {} err: {} rc: {}".format(cert, o, e, rc)
+        )
+        if any("fopen:No such file or directory" in err for err in e):
+            err_msg = (
+                "The TSL certificate file could not be found at {}.\n"
+                "out: {} err: {} rc: {}".format(cert, o, e, rc)
+            )
+        raise Exception(err_msg)
 
 
 def update_nss(databases, provider, remove=False):
@@ -62,7 +93,7 @@ def update_nss(databases, provider, remove=False):
     )
 
 
-def update_sssd_ad(domain, config):
+def sssd_update_ad(domain, config):
     """
     Add enumerate = True in sssd so user/group lists will be
     visible on the web-ui.
@@ -108,6 +139,11 @@ def update_sssd_ad(domain, config):
 
 
 def sssd_add_ldap(ldap_params):
+    """
+    Write to sssd.conf all parameters required for connecting to an ldap server.
+    :param ldap_params: Dict
+    :return:
+    """
     # Prepare options to write
     server = ldap_params["server"]
     opts = {
@@ -121,20 +157,21 @@ def sssd_add_ldap(ldap_params):
         "ldap_tls_reqcert": "demand",
         "ldap_tls_cacert": "{}".format(ldap_params["cacertpath"]),
         "ldap_tls_cacertdir": "{}".format(ldap_params["cacert_dir"]),
-        "enumerate": "{}".format(ldap_params["enumerate"])
+        "enumerate": "{}".format(ldap_params["enumerate"]),
     }
     # Write to file
     fh, npath = mkstemp()
-    # sssd_config = "/etc/sssd/sssd.conf"
     with open(SSSD_FILE) as sfo, open(npath, "w") as tfo:
         sssd_section = False
         domain_section = False
         for line in sfo.readlines():
             if sssd_section is True:
                 if re.match("domains = ", line) is not None:
-                    tfo.write("".join([line.strip(), " {}\n".format(server)]))
+                    line = "".join([line.strip(), " {}\n".format(server)])
                     sssd_section = False
-                    continue
+                elif len(line.strip()) == 0:
+                    tfo.write("domains = {}\n".format(server))
+                    sssd_section = False
             elif domain_section is True:
                 for k, v in opts.items():
                     if re.match(k, line) is None:
@@ -147,7 +184,7 @@ def sssd_add_ldap(ldap_params):
         if domain_section is False:
             # reached end of file, also coinciding with end of domain section
             tfo.write("\n[domain/{}]\n".format(server))
-            for k,v in opts.items():
+            for k, v in opts.items():
                 tfo.write("{} = {}\n".format(k, v))
     move(npath, SSSD_FILE)
     # Set file to rw- --- --- (600) via stat constants.
@@ -159,7 +196,16 @@ def sssd_add_ldap(ldap_params):
     )
     systemctl("sssd", "restart")
 
+
 def sssd_remove_ldap(server):
+    """
+    Removes any configuration pertaining to "sever" from sssd.conf
+    thereby unconfiguring the LDAP server. We thus need to remove it
+    from the list of domains in the [sssd] section, and then remove
+    its own section titled [domain/server].
+    :param server: String -
+    :return:
+    """
     # Write to file
     fh, npath = mkstemp()
     with open(SSSD_FILE) as sfo, open(npath, "w") as tfo:
@@ -202,7 +248,9 @@ def join_domain(config, method="sssd"):
     domain = config.get("domain")
     admin = config.get("username")
     cmd = [REALM, "join", "-U", admin, domain]
-    cmd_options = ["--membership-software=samba", ]
+    cmd_options = [
+        "--membership-software=samba",
+    ]
     if config.get("no_ldap_id_mapping") is True:
         cmd_options.append("--automatic-id-mapping=no")
     cmd[-3:-3] = cmd_options

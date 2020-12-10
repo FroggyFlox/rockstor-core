@@ -21,14 +21,18 @@ import socket
 from rest_framework.response import Response
 from os.path import dirname
 from storageadmin.util import handle_exception
-# from system.services import toggle_auth_service
 from django.db import transaction
 from base_service import BaseServiceDetailView
 from smart_manager.models import Service
 
 import logging
 
-from system.directory_services import update_nss, sssd_add_ldap, sssd_remove_ldap
+from system.directory_services import (
+    update_nss,
+    sssd_add_ldap,
+    sssd_remove_ldap,
+    validate_tsl_cert,
+)
 from system.services import systemctl
 
 logger = logging.getLogger(__name__)
@@ -88,6 +92,9 @@ class LdapServiceView(BaseServiceDetailView):
                 # Name resolution check
                 self._resolve_check(server, request)
 
+                # TSL certificate check
+                validate_tsl_cert(server, cert)
+
                 # Extract and format all info of interest
                 ldap_params = {
                     "server": server,
@@ -95,7 +102,7 @@ class LdapServiceView(BaseServiceDetailView):
                     "ldap_uri": "".join(["ldap://", server]),
                     "cacertpath": cert,
                     "cacert_dir": dirname(cert),
-                    "enumerate": config.get("enumerate")
+                    "enumerate": config.get("enumerate"),
                 }
                 # Update SSSD config
                 try:
