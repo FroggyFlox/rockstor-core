@@ -92,7 +92,6 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
             service = Service.objects.get(name="active-directory")
             if command == "config":
                 config = request.data.get("config")
-                logger.debug("config is = {}".format(config))
                 self._validate_config(config, request)
 
                 # 1. Name resolution check

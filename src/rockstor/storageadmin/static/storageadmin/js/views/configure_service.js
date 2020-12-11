@@ -3,7 +3,7 @@
  * @licstart  The following is the entire license notice for the
  * JavaScript code in this page.
  *
- * Copyright (c) 2012-2016 RockStor, Inc. <http://rockstor.com>
+ * Copyright (c) 2012-2020 RockStor, Inc. <http://rockstor.com>
  * This file is part of RockStor.
  *
  * RockStor is free software; you can redistribute it and/or modify
@@ -28,8 +28,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
     events: {
         'click #cancel': 'cancel',
-        // 'click #security': 'toggleFormFields', // remnant of #211
-        // 'click #enabletls': 'toggleCertUrl',
         'click #mode': 'toggleNutFields'
     },
 
@@ -62,13 +60,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
                 server: 'required',
                 basedn: 'required',
                 cert: 'required'
-                // cert: {
-                //     required: {
-                //         depends: function(element) {
-                //             return _this.$('#enabletls').prop('checked');
-                //         }
-                //     }
-                // }
             },
             docker: {
                 rootshare: 'required'
@@ -209,11 +200,6 @@ ConfigureServiceView = RockstorLayoutView.extend({
             placement: 'right',
             title: 'Password for the above username.'
         });
-        // this.$('#active-directory-form #idmap_range').tooltip({
-        //     html: true,
-        //     placement: 'right',
-        //     title: 'Default should work for most cases. rid idmap backend is the only one supported. The default range is 10000 - 999999.'
-        // });
         this.$('#smartd-form #smartd_config').tooltip({
             html: true,
             placement: 'right',
@@ -378,22 +364,6 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
         $('#services_modal').modal('hide');
     },
 
-    // The function below is no longer used, was implemented in #211
-    // toggleFormFields: function() {
-    //
-    //     if (this.$('#security').val() == 'ads') {
-    //         this.$('#realm').removeAttr('disabled');
-    //     } else {
-    //         this.$('#realm').attr('disabled', 'true');
-    //     }
-    //     if (this.$('#security').val() == 'ads' ||
-    //         this.$('#security').val() == 'domain') {
-    //         this.$('#templateshell').removeAttr('disabled');
-    //     } else {
-    //         this.$('#templateshell').attr('disabled', 'true');
-    //     }
-    // },
-
     toggleNutFields: function() {
 
         if (this.$('#mode').val() == 'standalone') {
@@ -427,16 +397,6 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             this.$('#nut-server').show();
         }
     },
-
-    // toggleCertUrl: function() {
-    //
-    //     var cbox = this.$('#enabletls');
-    //     if (cbox.prop('checked')) {
-    //         this.$('#cert-ph').css('visibility', 'visible');
-    //     } else {
-    //         this.$('#cert-ph').css('visibility', 'hidden');
-    //     }
-    // },
 
     initHandlebarHelpers: function() {
 

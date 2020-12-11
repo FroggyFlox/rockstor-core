@@ -38,12 +38,12 @@ ADCLI = "/usr/sbin/adcli"
 OPENSSL = "/usr/bin/openssl"
 
 
-def validate_tsl_cert(server, cert):
+def validate_tls_cert(server, cert):
     """
     Run openssl s_client -connect server:389 -CAfile path-to-cert
-    to verify the provided TSL certificate against the LDAP server.
+    to verify the provided TLS certificate against the LDAP server.
     :param server: String - FQDN of the LDAP server
-    :param cert: String - Absolute path to the TSL certificate
+    :param cert: String - Absolute path to the TLS certificate
     :return:
     """
     cmd = [
@@ -57,12 +57,12 @@ def validate_tsl_cert(server, cert):
     o, e, rc = run_command(cmd, throw=False)
     if "Verification: OK" not in o:
         err_msg = (
-            "Failed to validate the TSL certificate ({}).\n"
+            "Failed to validate the TLS certificate ({}).\n"
             "out: {} err: {} rc: {}".format(cert, o, e, rc)
         )
         if any("fopen:No such file or directory" in err for err in e):
             err_msg = (
-                "The TSL certificate file could not be found at {}.\n"
+                "The TLS certificate file could not be found at {}.\n"
                 "out: {} err: {} rc: {}".format(cert, o, e, rc)
             )
         raise Exception(err_msg)
@@ -78,10 +78,7 @@ def update_nss(databases, provider, remove=False):
     :return:
     """
     fo, npath = mkstemp()
-    # databases = ["passwd", "group"]
     dbs = [db + ":" for db in databases]
-    # provider = "sss"
-
     append_to_line(NSSWITCH_FILE, npath, dbs, provider, remove)
     move(npath, NSSWITCH_FILE)
     # Set file to rw- r-- r-- (644) via stat constants.
@@ -110,22 +107,19 @@ def sssd_update_ad(domain, config):
         opts.append(csl)
     ol = "".join(opts)
     fh, npath = mkstemp()
-    # sssd_config = "/etc/sssd/sssd.conf"
     with open(SSSD_FILE) as sfo, open(npath, "w") as tfo:
         domain_section = False
         for line in sfo.readlines():
             if domain_section is True:
                 if len(line.strip()) == 0 or line[0] == "[":
-                    # empty line or new section without empty line before
-                    # it.
+                    # empty line or new section without empty line before it.
                     tfo.write(ol)
                     domain_section = False
             elif re.match("\[domain/%s]" % domain, line) is not None:
                 domain_section = True
             tfo.write(line)
         if domain_section is True:
-            # reached end of file, also coinciding with end of domain
-            # section
+            # reached end of file, also coinciding with end of domain section
             tfo.write(ol)
     move(npath, SSSD_FILE)
     # Set file to rw- --- --- (600) via stat constants.
@@ -206,7 +200,6 @@ def sssd_remove_ldap(server):
     :param server: String -
     :return:
     """
-    # Write to file
     fh, npath = mkstemp()
     with open(SSSD_FILE) as sfo, open(npath, "w") as tfo:
         sssd_section = False

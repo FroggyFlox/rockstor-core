@@ -53,7 +53,6 @@ def init_service_op(service_name, command, throw=True):
         "ypbind",
         "rpcbind",
         "ntpd",
-        "nslcd",
         "snmpd",
         "docker",
         "smartd",
@@ -140,8 +139,11 @@ def service_status(service_name, config=None):
         # initial check on sssd status: 0 = OK 3 = stopped
         if rc != 0:
             return o, e, rc
+        # check for service configuration
+        if config is None:
+            return o, e, 1
         # sssd is also used for the Active Directory service, so we need to
-        # check if an LDAP domain is configured as well in its config file
+        # check if the configured LDAP domain is defined in its config file
         with open(SSSD_FILE) as sfo:
             for line in sfo.readlines():
                 if (
@@ -178,28 +180,8 @@ def service_status(service_name, config=None):
         return run_command([SYSTEMCTL_BIN, "status", "nut-monitor"], throw=False)
     elif service_name == "active-directory":
         if config is not None:
-            # # 2 steps Active Directory status check
-            # # First checks secret via rpc callable
-            # # Second checks via auth for admin username
-            # # If both give us 0 rc Active Directory is running
-            # wbinfo_trust_cmd = [WBINFO, "-t", "--domain", config.get("domain")]
-            # wbinfo_auth_credentials = "{}@{}%{}".format(
-            #     config.get("username"), config.get("domain"), config.get("password")
-            # )
-            # wbinfo_auth_cmd = [
-            #     WBINFO,
-            #     "-a",
-            #     wbinfo_auth_credentials,
-            #     "--domain",
-            #     config.get("domain"),
-            # ]
-            # wbinfo_trust = run_command(wbinfo_trust_cmd, throw=False)
-            # wbinfo_auth = run_command(wbinfo_auth_cmd, throw=False)
-            # active_directory_rc = 1
-            # if wbinfo_trust[2] == 0 and wbinfo_auth[2] == 0:
-            #     active_directory_rc = 0
             active_directory_rc = 1
-            o, e, rc = run_command([REALM, "list", "--name-only", ])
+            o, e, rc = run_command([REALM, "list", "--name-only",])
             if config["domain"] in o:
                 active_directory_rc = 0
             return "", "", active_directory_rc
@@ -207,20 +189,6 @@ def service_status(service_name, config=None):
         return "", "", 1
 
     return init_service_op(service_name, "status", throw=False)
-
-
-def ldap_input(config, command):
-    ac_cmd = []
-    if command == "stop":
-        ac_cmd.extend(["--disableldap", "--disableldapauth"])
-    else:
-        ac_cmd.extend(["--enableldap", "--enableldapauth"])
-        ac_cmd.append("--ldapserver={}".format(config["server"]))
-        ac_cmd.append("--ldapbasedn={}".format(config["basedn"]))
-        if config["enabletls"] is True:
-            ac_cmd.append("--enableldaptls")
-            ac_cmd.append("--ldaploadcacert={}".format(config["cert"]))
-    return ac_cmd
 
 
 def update_nginx(ip, port):

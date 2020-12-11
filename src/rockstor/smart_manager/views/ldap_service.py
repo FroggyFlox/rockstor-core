@@ -31,7 +31,7 @@ from system.directory_services import (
     update_nss,
     sssd_add_ldap,
     sssd_remove_ldap,
-    validate_tsl_cert,
+    validate_tls_cert,
 )
 from system.services import systemctl
 
@@ -71,7 +71,6 @@ class LdapServiceView(BaseServiceDetailView):
             if command == "config":
                 try:
                     config = request.data["config"]
-                    logger.debug("ldap_config is = {}".format(config))
 
                     # Name resolution check
                     self._resolve_check(config.get("server"), request)
@@ -92,8 +91,8 @@ class LdapServiceView(BaseServiceDetailView):
                 # Name resolution check
                 self._resolve_check(server, request)
 
-                # TSL certificate check
-                validate_tsl_cert(server, cert)
+                # TLS certificate check
+                validate_tls_cert(server, cert)
 
                 # Extract and format all info of interest
                 ldap_params = {
