@@ -37,11 +37,17 @@ NetworkView = Backbone.View.extend({
         this.collection.on('reset', this.renderNetwork, this);
         this.devices = new NetworkDeviceCollection();
         this.devices.on('reset', this.renderNetwork, this);
+        this.serviceName = 'docker';
+        this.service = new Service({
+            name: this.serviceName
+        });
+        this.service.on('reset', this.renderNetwork, this);
         this.initHandlebarHelpers();
     },
 
     render: function() {
         var _this = this;
+        this.service.fetch();
         this.collection.fetch();
         this.devices.fetch();
         return this;
@@ -61,13 +67,19 @@ NetworkView = Backbone.View.extend({
             }
         }
 
+        if (typeof this.current_docker_status == 'undefined') {
+            this.current_docker_status = this.service.get('status');
+        }
+        console.log('docker status is = ', this.current_docker_status);
+
         $(this.el).empty();
         $(this.el).append(this.template({
             collection: this.collection,
             connections: this.collection.toJSON(),
             parent_connections: this.pc,
             child_connections: this.cc,
-            devices: this.devices.toJSON()
+            devices: this.devices.toJSON(),
+            docker_running: this.current_docker_status
         }));
         setApplianceName();
 
