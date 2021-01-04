@@ -131,7 +131,7 @@ class NetworkMixin(object):
                 )
 
         else:
-            logger.error("Unknown ctype: {} config: {}".format(ctype, config))
+            logger.info("Unknown ctype: {} config: {}".format(ctype, config))
 
     @staticmethod
     @transaction.atomic
