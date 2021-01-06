@@ -37,17 +37,18 @@ NetworkView = Backbone.View.extend({
         this.collection.on('reset', this.renderNetwork, this);
         this.devices = new NetworkDeviceCollection();
         this.devices.on('reset', this.renderNetwork, this);
-        this.serviceName = 'docker';
-        this.service = new Service({
-            name: this.serviceName
+        // this.serviceName = 'docker';
+        this.docker_service = new Service({
+            // name: this.serviceName
+            name: 'docker'
         });
-        this.service.on('reset', this.renderNetwork, this);
+        this.docker_service.on('reset', this.renderNetwork, this);
         this.initHandlebarHelpers();
     },
 
     render: function() {
         var _this = this;
-        this.service.fetch();
+        this.docker_service.fetch();
         this.collection.fetch();
         this.devices.fetch();
         return this;
@@ -66,9 +67,9 @@ NetworkView = Backbone.View.extend({
                 this.pc.push(c.toJSON());
             }
         }
-
+        // Get status of Rock-on service to display edit/delete links accordingly
         if (typeof this.current_docker_status == 'undefined') {
-            this.current_docker_status = this.service.get('status');
+            this.current_docker_status = this.docker_service.get('status');
         }
         console.log('docker status is = ', this.current_docker_status);
 
