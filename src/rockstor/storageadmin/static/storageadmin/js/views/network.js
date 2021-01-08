@@ -37,9 +37,7 @@ NetworkView = Backbone.View.extend({
         this.collection.on('reset', this.renderNetwork, this);
         this.devices = new NetworkDeviceCollection();
         this.devices.on('reset', this.renderNetwork, this);
-        // this.serviceName = 'docker';
         this.docker_service = new Service({
-            // name: this.serviceName
             name: 'docker'
         });
         this.docker_service.on('reset', this.renderNetwork, this);
@@ -68,6 +66,7 @@ NetworkView = Backbone.View.extend({
             }
         }
         // Get status of Rock-on service to display edit/delete links accordingly
+        // on docker network connections (rocknets)
         if (typeof this.current_docker_status == 'undefined') {
             this.current_docker_status = this.docker_service.get('status');
         }
