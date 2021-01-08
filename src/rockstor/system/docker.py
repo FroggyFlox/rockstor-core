@@ -186,6 +186,11 @@ def dnet_create(
     :param subnet:
     :return:
     """
+    if not docker_status():
+        raise Exception(
+            "Cannot create rocknet while docker is not running. "
+            "Turn the Rock-on service ON and try again"
+        )
     o, e, rc = run_command(list(DNET) + ["list", "--format", "{{.Name}}",])
     if network not in o:
         logger.debug(
