@@ -121,7 +121,7 @@ def dnet_inspect(dname):
     return json.loads(o[0])
 
 
-def probe_running_containers(container=None, network=None, all=False):
+def probe_containers(container=None, network=None, all=False):
     """
     List docker containers.
     :param container: container name
@@ -260,8 +260,8 @@ def dnet_connect(container, network, all=False):
     :param all:
     :return:
     """
-    if (container in probe_running_containers(container=container, all=all)) and (
-        container not in probe_running_containers(network=network, all=all)
+    if (container in probe_containers(container=container, all=all)) and (
+            container not in probe_containers(network=network, all=all)
     ):
         run_command(list(DNET) + ["connect", network, container,], log=True)
 
