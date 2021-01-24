@@ -147,13 +147,14 @@ def probe_containers(container=None, network=None, all=False):
     ]
     if docker_status():
         if all:
-            cmd.extend((["-a",]))
+            cmd.extend(["-a",])
         if network:
-            cmd.extend((["--filter", "network={}".format(network),]))
+            cmd.extend(["--filter", "network={}".format(network),])
         if container:
-            cmd.extend((running_filters + ["--filter", "name={}".format(container),]))
-        else:
-            cmd.extend((running_filters))
+            # cmd.extend((running_filters + ["--filter", "name={}".format(container),]))
+            cmd.extend(["--filter", "name={}".format(container),])
+        # else:
+        #     cmd.extend((running_filters))
         o, e, rc = run_command(cmd)
         return o
 
