@@ -176,7 +176,7 @@ class ActiveDirectoryServiceView(BaseServiceDetailView):
                             "workgroup and try again."
                         )
                         raise Exception(err_msg)
-                except TypeError as e:
+                except TypeError:
                     # Samba service is not configured, so let's do that now
                     smb_config = {}
                 finally:
