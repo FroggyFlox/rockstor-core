@@ -17,51 +17,28 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from smart_manager.models import Service
 from storageadmin.models import Setup
+from system.constants import SERVICES, SERVICES_CONFIG
 
 
 def register_services() -> None:
-    services = {
-        "NFS": "nfs",
-        "Samba": "smb",
-        "NIS": "nis",
-        "NTP": "ntpd",
-        "Active Directory": "active-directory",
-        "LDAP": "ldap",
-        "SFTP": "sftp",
-        "Replication": "replication",
-        "SNMP": "snmpd",
-        "Rock-on": "docker",
-        "S.M.A.R.T": "smartd",
-        "NUT-UPS": "nut",
-        # ZTaskd display/service names maintained: but are now huey pseudonyms.
-        "ZTaskd": "ztask-daemon",
-        "Bootstrap": "rockstor-bootstrap",
-        "Shell In A Box": "shellinaboxd",
-        "Rockstor": "rockstor",
-        "Tailscale": "tailscaled",
-    }
-
-    # N.B. all other services have null as their default config with service.
-    # Consider bringing shellinaboxd in line with this now default behaviour.
-    services_configs = {
-        "shellinaboxd": (
-            '{"detach": false, "css": "white-on-black", ' '"shelltype": "LOGIN"}'
-        )
-    }
-
-    for k, v in services.items():
+    """Ensures Service model is properly instantiated
+    This function loops through a list of services used as a reference
+    for how the Service model should be populated.
+    If a service listed is not present in the model, create it.
+    """
+    for k, v in SERVICES.items():
         try:
             so = Service.objects.get(name=v)
             so.display_name = k
             # Apply any configuration defaults found in services_configs.
-            if v in services_configs:
-                so.config = services_configs[v]
+            if v in SERVICES_CONFIG:
+                so.config = SERVICES_CONFIG[v]
         except Service.DoesNotExist:
             so = Service(display_name=k, name=v)
         finally:
             so.save()
     for so in Service.objects.filter():
-        if so.display_name not in services:
+        if so.display_name not in SERVICES:
             so.delete()
 
 

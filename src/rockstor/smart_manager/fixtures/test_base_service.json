@@ -1,0 +1,325 @@
+[
+{
+    "model": "smart_manager.service",
+    "pk": 1,
+    "fields": {
+        "name": "replication",
+        "display_name": "Replication",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 2,
+    "fields": {
+        "name": "smb",
+        "display_name": "Samba",
+        "config": "{\"workgroup\": \"WORKGROUP\"}"
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 3,
+    "fields": {
+        "name": "nfs",
+        "display_name": "NFS",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 5,
+    "fields": {
+        "name": "ntpd",
+        "display_name": "NTP",
+        "config": "{\"server\": \"2.opensuse.pool.ntp.org\"}"
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 6,
+    "fields": {
+        "name": "nis",
+        "display_name": "NIS",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 7,
+    "fields": {
+        "name": "ldap",
+        "display_name": "LDAP",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 8,
+    "fields": {
+        "name": "sftp",
+        "display_name": "SFTP",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 9,
+    "fields": {
+        "name": "rockstor",
+        "display_name": "Rockstor",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 10,
+    "fields": {
+        "name": "smartd",
+        "display_name": "S.M.A.R.T",
+        "config": "{\"custom_config\": \"DEVICESCAN -a\"}"
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 11,
+    "fields": {
+        "name": "active-directory",
+        "display_name": "Active Directory",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 12,
+    "fields": {
+        "name": "nut",
+        "display_name": "NUT-UPS",
+        "config": "{\"mode\": \"standalone\", \"upsmon\": \"master\", \"upsname\": \"ups\", \"desc\": \"Rockstor UPS\", \"driver\": \"apcsmart\", \"port\": \"auto\", \"nutserver\": \"localhost\", \"nutuser\": \"monuser\", \"password\": \"monuser\", \"shutdowntimer\": \"0\"}"
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 13,
+    "fields": {
+        "name": "snmpd",
+        "display_name": "SNMP",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 14,
+    "fields": {
+        "name": "docker",
+        "display_name": "Rock-on",
+        "config": "{\"root_share\": \"test_share01\"}"
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 15,
+    "fields": {
+        "name": "shellinaboxd",
+        "display_name": "Shell In A Box",
+        "config": "{\"shelltype\": \"SSH\", \"css\": \"black-on-white\", \"detach\": true}"
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 17,
+    "fields": {
+        "name": "ztask-daemon",
+        "display_name": "ZTaskd",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 18,
+    "fields": {
+        "name": "rockstor-bootstrap",
+        "display_name": "Bootstrap",
+        "config": null
+    }
+},
+{
+    "model": "smart_manager.service",
+    "pk": 19,
+    "fields": {
+        "name": "tailscaled",
+        "display_name": "Tailscale",
+        "config": "{\"reset\": \"yes\"}"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 1,
+    "fields": {
+        "service": 3,
+        "status": false,
+        "count": 21,
+        "ts": "2023-10-23T19:21:25.635Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 2,
+    "fields": {
+        "service": 2,
+        "status": false,
+        "count": 22,
+        "ts": "2023-10-23T19:21:25.560Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 3,
+    "fields": {
+        "service": 6,
+        "status": false,
+        "count": 22,
+        "ts": "2023-10-23T19:21:25.655Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 4,
+    "fields": {
+        "service": 5,
+        "status": true,
+        "count": 22,
+        "ts": "2023-10-23T19:21:25.675Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 5,
+    "fields": {
+        "service": 11,
+        "status": false,
+        "count": 21,
+        "ts": "2023-10-23T19:21:25.685Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 6,
+    "fields": {
+        "service": 7,
+        "status": false,
+        "count": 22,
+        "ts": "2023-10-23T19:21:25.704Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 7,
+    "fields": {
+        "service": 8,
+        "status": true,
+        "count": 21,
+        "ts": "2023-10-23T19:21:25.725Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 8,
+    "fields": {
+        "service": 1,
+        "status": false,
+        "count": 21,
+        "ts": "2023-10-23T19:21:25.881Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 9,
+    "fields": {
+        "service": 13,
+        "status": false,
+        "count": 21,
+        "ts": "2023-10-23T19:21:25.913Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 10,
+    "fields": {
+        "service": 14,
+        "status": false,
+        "count": 23,
+        "ts": "2023-10-23T19:21:25.936Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 11,
+    "fields": {
+        "service": 10,
+        "status": false,
+        "count": 22,
+        "ts": "2023-10-23T19:21:25.536Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 12,
+    "fields": {
+        "service": 12,
+        "status": false,
+        "count": 22,
+        "ts": "2023-10-23T19:21:25.959Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 13,
+    "fields": {
+        "service": 17,
+        "status": true,
+        "count": 21,
+        "ts": "2023-10-23T19:21:26.111Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 14,
+    "fields": {
+        "service": 18,
+        "status": true,
+        "count": 21,
+        "ts": "2023-10-23T19:21:26.137Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 15,
+    "fields": {
+        "service": 15,
+        "status": false,
+        "count": 25,
+        "ts": "2023-10-23T19:21:25.580Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 16,
+    "fields": {
+        "service": 9,
+        "status": true,
+        "count": 22,
+        "ts": "2023-10-23T19:21:26.156Z"
+    }
+},
+{
+    "model": "smart_manager.servicestatus",
+    "pk": 17,
+    "fields": {
+        "service": 19,
+        "status": false,
+        "count": 30,
+        "ts": "2023-10-23T19:21:25.614Z"
+    }
+}
+]

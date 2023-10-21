@@ -27,7 +27,8 @@ ConfigureServiceView = RockstorLayoutView.extend({
 
     events: {
         'click #cancel': 'cancel',
-        'click #mode': 'toggleNutFields'
+        'click #mode': 'toggleNutFields',
+        'click #reset-config': 'resetConfig'
     },
 
     initialize: function() {
@@ -527,6 +528,32 @@ To alert on temperature changes: <br> <strong>DEVICESCAN -W 4,35,40</strong> <br
             this.$('#ups-port').hide();
             this.$('#port').attr('value', 'auto');
             this.$('#nut-server').show();
+        }
+    },
+
+    resetConfig: function (event) {
+        var _this = this;
+        if (event) event.preventDefault();
+        console.log('ServiceName: ', _this.serviceName);
+        var button = $(event.currentTarget);
+        let confirmMsg = 'This will turn OFF this service and reset its configuration to its default.\n' +
+            'Are you sure you want to proceed?';
+        if (confirm(confirmMsg)) {
+            $.ajax({
+                url: '/api/sm/services/' + _this.serviceName,
+                type: 'PUT',
+                dataType: 'json',
+                success: function() {
+                    enableButton(button);
+                    $('#services_modal').modal('hide');
+                    app_router.navigate('/services', {
+                        trigger: true
+                    });
+                    },
+                error: function(xhr, status, error) {}
+            });
+        } else {
+            return false;
         }
     },
 

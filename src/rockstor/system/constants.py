@@ -43,3 +43,33 @@ TAILSCALE = "/usr/bin/tailscale"
 # 11: SCSI CD-ROM
 # 2: Floppy disks
 BLOCK_DEV_EXCLUDE: list[str] = ["7", "11", "2"]
+
+# Define services defaults
+SERVICES = {
+    "NFS": "nfs",
+    "Samba": "smb",
+    "NIS": "nis",
+    "NTP": "ntpd",
+    "Active Directory": "active-directory",
+    "LDAP": "ldap",
+    "SFTP": "sftp",
+    "Replication": "replication",
+    "SNMP": "snmpd",
+    "Rock-on": "docker",
+    "S.M.A.R.T": "smartd",
+    "NUT-UPS": "nut",
+    # ZTaskd display/service names maintained: but are now huey pseudonyms.
+    "ZTaskd": "ztask-daemon",
+    "Bootstrap": "rockstor-bootstrap",
+    "Shell In A Box": "shellinaboxd",
+    "Rockstor": "rockstor",
+    "Tailscale": "tailscaled",
+}
+
+# N.B. all other services have null as their default config with service.
+# Consider bringing shellinaboxd in line with this now default behaviour.
+SERVICES_CONFIG = {
+    "shellinaboxd": (
+        '{"detach": false, "css": "white-on-black", "shelltype": "LOGIN"}'
+    )
+}

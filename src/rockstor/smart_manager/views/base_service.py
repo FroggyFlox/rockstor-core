@@ -20,8 +20,11 @@ from django.conf import settings
 from smart_manager.serializers import ServiceStatusSerializer
 import json
 import rest_framework_custom as rfc
+from cli.api_wrapper import APIWrapper
 from rest_framework.response import Response
-from system.services import service_status
+
+from system.constants import SERVICES_CONFIG
+from system.services import service_status, systemctl
 from django.db import transaction
 from datetime import datetime, timezone
 import logging
@@ -64,10 +67,7 @@ class ServiceMixin(object):
                 return True
             return False
         except Exception as e:
-            msg = "Exception while querying status of service(%s): %s" % (
-                service.name,
-                e.__str__(),
-            )
+            msg = f"Exception while querying status of service ({service.name}): {e.__str__()}"
             logger.error(msg)
             logger.exception(e)
             return False
@@ -101,5 +101,59 @@ class BaseServiceDetailView(ServiceMixin, rfc.GenericView):
             url_fields = self.request.path.strip("/").split("/")
             s = Service.objects.get(name=url_fields[3])
             self.paginate_by = 0
+            serialized_data = ServiceStatusSerializer(self._get_or_create_sso(s))
+            return Response(serialized_data.data)
+
+    def put(self, request):
+        """Used to reset a Service config to its defaults"""
+        with self._handle_exception(self.request, msg=None):
+            url_fields = self.request.path.strip("/").split("/")
+            service_name = url_fields[3]
+            s = Service.objects.get(name=service_name)
+
+            # First, stop the Service
+            if service_name == "rockstor":
+                # For the Rockstor service, we cannot STOP it
+                # Instead, we need to run the 'config' command
+                # with what should be defaults settings
+                # This will save these 'data' to the instance's config field
+                # but we'll set it back to 'null' at then of this PUT here.
+                data = {
+                    "config": {
+                        "network_interface": "",
+                        "listener_port": 443
+                    }
+                }
+                aw = APIWrapper()
+                url = f"sm/services/{service_name}/config"
+                headers = {
+                    "content-type": "application/json",
+                }
+                aw.api_call(url, data=data, calltype="post", headers=headers, save_error=False)
+                logger.debug(f"sent POST to {url}")
+            else:
+                aw = APIWrapper()
+                url = f"sm/services/{service_name}/stop"
+                aw.api_call(url, data=None, calltype="post", save_error=False)
+                logger.debug(f"sent POST to {url}")
+            # The tailscaled service requires an additional step
+            if service_name == "tailscaled":
+                systemctl(service_name, "stop")
+                systemctl(service_name, "disable")
+
+            # Then, set config to default_config
+            default_config = None
+            # Some services have a non-null default config
+            # services_configs = {
+            #     "shellinaboxd": (
+            #         '{"detach": false, "css": "white-on-black", "shelltype": "LOGIN"}'
+            #     )
+            # }
+            if service_name in SERVICES_CONFIG:
+                default_config = SERVICES_CONFIG[service_name]
+            logger.debug(f"Reset config of {service_name} to {default_config}")
+            s.config = default_config
+            s.save()
+
             serialized_data = ServiceStatusSerializer(self._get_or_create_sso(s))
             return Response(serialized_data.data)
