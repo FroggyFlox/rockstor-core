@@ -90,6 +90,7 @@ keyring-pass = "*"
 supervisor = "==4.2.4"
 
 # `poetry install --with dev`
+daphne = "^4.1.2"
 [tool.poetry.group.dev]
 optional = true
 
