@@ -17,11 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from jeepney.io.blocking import open_dbus_connection
 
-from jeepney_wrappers import UnitProperties
+from system.jeepney_wrappers import UnitProperties
 
-# Instantiate the object
-test = UnitProperties(service="smb")
 
-# Connect to the SYSTEM bus and send the message, collecting the reply
-connection = open_dbus_connection(bus='SYSTEM')  # could also be 'SESSION'
-reply = connection.send_and_get_reply(test.Get(iface_name="Service", property_name="StatusText"))
+def jeepney_get_service_property(
+    service: str, property_name: str, iface_name: str = "Service", bus: str = "SESSION"
+):
+    # Instantiate the object
+    obj = UnitProperties(service=service)
+    # Connect to the bus and send the message, collecting the reply
+    connection = open_dbus_connection(bus=bus)  # could also be 'SYSTEM'
+    reply = connection.send_and_get_reply(
+        obj.Get(iface_name=iface_name, property_name=property_name)
+    )
+    return reply.body[0][1]
